@@ -49,6 +49,12 @@
 #include "pmacc/particles/ParticleDescription.hpp"
 #include <boost/mpl/string.hpp>
 
+#include "pmacc/traits/iterator/Componenttype.hpp"
+#include "pmacc/traits/iterator/HasConstantSize.hpp"
+#include "pmacc/traits/iterator/NumberElements.hpp"
+#include "pmacc/traits/iterator/ContainerCategory.hpp"
+#include "pmacc/memory/iterator/categorie/ArrayLike.hpp"
+
 namespace pmacc
 {
 
@@ -159,10 +165,54 @@ public InheritLinearly<
         return std::string(boost::mpl::c_str<Name>::value);
     }
 
-};
+}; // struct frame
 
 namespace traits
 {
+
+/**
+@brief number of elements within a frame
+@todo Here we need to specify the number of particles in frames
+*/
+template<
+typename T_CreatePairOperator,
+typename T_ParticleDescription>
+struct NumberElements<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+{
+    typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> ContainerType;
+
+    uint_fast32_t
+    HDINLINE
+    operator()(ContainerType*)
+    {
+        return 256;
+    }
+};
+
+template<
+typename T_CreatePairOperator,
+typename T_ParticleDescription>
+struct HasConstantSize<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+{
+    const static bool value = true;
+};
+
+template<
+typename T_CreatePairOperator,
+typename T_ParticleDescription>
+struct ContainerCategory<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+{
+    typedef pmacc::container::categorie::ArrayLike type;
+};
+
+template<
+typename T_CreatePairOperator,
+typename T_ParticleDescription>
+struct ComponentType<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+{
+typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> T_Frame;
+    typedef typename T_Frame::ParticleType type;
+};
 
 template<typename T_IdentifierName,
 typename T_CreatePairOperator,
