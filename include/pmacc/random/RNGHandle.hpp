@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Alexander Grund
+/* Copyright 2015-2018 Alexander Grund
  *
  * This file is part of PMacc.
  *
@@ -46,7 +46,7 @@ namespace random
         template<class T_Distribution>
         struct GetRandomType
         {
-            typedef typename bmpl::apply<T_Distribution, RNGMethod>::type Distribution;
+            typedef typename T_Distribution::template applyMethod<RNGMethod>::type Distribution;
             typedef Random<Distribution, RNGMethod, RNGState*> type;
         };
 
@@ -91,7 +91,7 @@ namespace random
         HDINLINE typename GetRandomType<T_Distribution>::type
         applyDistribution()
         {
-            return GetRandomType<T_Distribution>::type(&getState());
+            return typename GetRandomType<T_Distribution>::type(&getState());
         }
 
     protected:

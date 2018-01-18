@@ -1,4 +1,4 @@
-/* Copyright 2017 Rene Widera
+/* Copyright 2017-2018 Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -22,3 +22,6 @@
 #include "picongpu/plugins/misc/ExecuteIfNameIsEqual.hpp"
 #include "picongpu/plugins/misc/AppendName.hpp"
 #include "picongpu/plugins/misc/concatenateToString.hpp"
+#include "picongpu/plugins/misc/splitString.hpp"
+#include "picongpu/plugins/misc/containsObject.hpp"
+#include "picongpu/plugins/misc/removeSpaces.hpp"

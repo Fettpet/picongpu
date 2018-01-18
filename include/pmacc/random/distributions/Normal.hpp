@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Alexander Grund
+/* Copyright 2015-2018 Alexander Grund
  *
  * This file is part of PMacc.
  *
@@ -22,6 +22,7 @@
 #pragma once
 
 #include "pmacc/types.hpp"
+#include "pmacc/random/methods/RngPlaceholder.hpp"
 
 namespace pmacc
 {
@@ -39,12 +40,23 @@ namespace distributions
     /**
      * Returns a random, normal distributed value of the given type
      */
-    template<typename T_Type, class T_RNGMethod = bmpl::_1>
-    class Normal: public detail::Normal<T_Type, T_RNGMethod>
-    {};
+    template<typename T_Type, class T_RNGMethod = methods::RngPlaceholder>
+    struct Normal: public detail::Normal<T_Type, T_RNGMethod>
+    {
+        template< typename T_Method >
+        struct applyMethod
+        {
+            using type = Normal<
+                T_Type,
+                T_Method
+            >;
+        };
+    };
 
 }  // namespace distributions
 }  // namespace random
 }  // namespace pmacc
 
+#include "pmacc/random/distributions/normal/Normal_generic.hpp"
 #include "pmacc/random/distributions/normal/Normal_float.hpp"
+#include "pmacc/random/distributions/normal/Normal_double.hpp"

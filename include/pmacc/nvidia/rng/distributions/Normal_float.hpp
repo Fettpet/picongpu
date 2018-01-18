@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Heiko Burau, Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -45,7 +45,7 @@ namespace detail
         using Dist =
             decltype(
                 ::alpaka::rand::distribution::createNormalReal<Type>(
-                    std::declval<T_Acc const &>()));
+                    alpaka::core::declval<T_Acc const &>()));
         PMACC_ALIGN(dist, Dist);
     public:
         HDINLINE Normal_float()

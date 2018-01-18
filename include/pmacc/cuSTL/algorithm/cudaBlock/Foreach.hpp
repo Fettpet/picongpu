@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera, Axel Huebl
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Axel Huebl
  *
  * This file is part of PMacc.
  *
@@ -74,11 +74,7 @@ struct Foreach
 private:
     const int linearThreadIdx;
 public:
-    DINLINE Foreach()
-     : linearThreadIdx(
-        threadIdx.z * BlockDim::x::value * BlockDim::y::value +
-        threadIdx.y * BlockDim::x::value +
-        threadIdx.x) {}
+
     DINLINE Foreach(int linearThreadIdx) : linearThreadIdx(linearThreadIdx) {}
 
     /* operator()(zone, cursor0, cursor1, ..., cursorN-1, functor or lambdaFun)

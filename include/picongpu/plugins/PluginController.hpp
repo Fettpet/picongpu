@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Axel Huebl, Benjamin Schneider, Felix Schmitt,
+/* Copyright 2013-2018 Axel Huebl, Benjamin Schneider, Felix Schmitt,
  *                     Heiko Burau, Rene Widera, Richard Pausch,
  *                     Benjamin Worpitz, Erik Zenker
  *
@@ -48,7 +48,6 @@
 #   include "picongpu/plugins/ChargeConservation.hpp"
 #   include "picongpu/plugins/particleMerging/ParticleMerger.hpp"
 #   if(ENABLE_HDF5 == 1)
-#       include "picongpu/plugins/PhaseSpace/PhaseSpaceMulti.hpp"
 #       include "picongpu/plugins/makroParticleCounter/PerSuperCell.hpp"
 #   endif
 
@@ -63,6 +62,7 @@
 #endif
 
 #if (ENABLE_HDF5 == 1)
+#   include "picongpu/plugins/PhaseSpace/PhaseSpace.hpp"
 #   include "picongpu/plugins/particleCalorimeter/ParticleCalorimeter.hpp"
 #   include "picongpu/plugins/radiation/parameters.hpp"
 #   include "picongpu/plugins/radiation/Radiation.hpp"
@@ -163,7 +163,7 @@ private:
         Checkpoint,
         EnergyFields
 #if (ENABLE_ADIOS == 1)
-        , adios::ADIOSWriter
+        , plugins::multi::Master< adios::ADIOSWriter >
 #endif
 
 #if( PMACC_CUDA_ENABLED == 1 )
@@ -179,7 +179,7 @@ private:
 #endif
 
 #if (ENABLE_HDF5 == 1)
-        , hdf5::HDF5Writer
+        , plugins::multi::Master< hdf5::HDF5Writer >
 #endif
         , ResourceLog
     >;
@@ -210,19 +210,19 @@ private:
     /* define species plugins */
     using UnspecializedSpeciesPlugins = bmpl::vector <
         plugins::multi::Master< EnergyParticles<bmpl::_1> >,
-        BinEnergyParticles<bmpl::_1>,
+        plugins::multi::Master< BinEnergyParticles<bmpl::_1> >,
         CountParticles<bmpl::_1>,
         PngPlugin< Visualisation<bmpl::_1, PngCreator> >
 #if(ENABLE_HDF5 == 1)
         , Radiation<bmpl::_1>
         , ParticleCalorimeter<bmpl::_1>
+        , plugins::multi::Master< PhaseSpace<particles::shapes::Counter::ChargeAssignment, bmpl::_1> >
 #endif
 #if( PMACC_CUDA_ENABLED == 1 )
         , PositionsParticles<bmpl::_1>
         , plugins::particleMerging::ParticleMerger<bmpl::_1>
 #   if(ENABLE_HDF5 == 1)
         , PerSuperCell<bmpl::_1>
-        , PhaseSpaceMulti<particles::shapes::Counter::ChargeAssignment, bmpl::_1>
 #   endif
 #endif
     >;

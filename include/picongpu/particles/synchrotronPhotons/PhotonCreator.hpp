@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Heiko Burau
+/* Copyright 2015-2018 Heiko Burau
  *
  * This file is part of PIConGPU.
  *
@@ -34,7 +34,7 @@
 #include "picongpu/fields/FieldB.hpp"
 #include "picongpu/fields/FieldE.hpp"
 
-#include <pmacc/random/methods/AlpakaRand.hpp>
+#include <pmacc/random/methods/XorMin.hpp>
 #include <pmacc/random/distributions/Uniform.hpp>
 #include <pmacc/random/RNGProvider.hpp>
 
@@ -113,7 +113,7 @@ private:
     PMACC_ALIGN(photon_mom, float3_X);
 
     /* random number generator */
-    typedef pmacc::random::RNGProvider<simDim, pmacc::random::methods::AlpakaRand< cupla::Acc>> RNGFactory;
+    typedef pmacc::random::RNGProvider<simDim, pmacc::random::methods::XorMin< cupla::Acc>> RNGFactory;
     typedef pmacc::random::distributions::Uniform<float> Distribution;
     typedef typename RNGFactory::GetRandomType<Distribution>::type RandomGen;
     RandomGen randomGen;

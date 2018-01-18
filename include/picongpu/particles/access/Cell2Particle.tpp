@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Heiko Burau, Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -24,7 +24,13 @@
 #include <pmacc/math/MapTuple.hpp>
 #include <pmacc/memory/shared/Allocate.hpp>
 #include <boost/mpl/void.hpp>
+#include <pmacc/mappings/threads/WorkerCfg.hpp>
+#include <pmacc/mappings/threads/ForEachIdx.hpp>
+#include <pmacc/mappings/threads/IdxConfig.hpp>
 
+
+namespace picongpu
+{
 namespace particleAccess
 {
 
@@ -33,48 +39,89 @@ namespace particleAccess
 #define ARGS(Z, N, _) arg ## N
 
 #define CELL2PARTICLE_OPERATOR(Z, N, _) \
-template<typename SuperCellSize> \
-template<typename T_Acc, typename TParticlesBox, typename CellIndex, typename Functor \
+template<typename SuperCellSize, uint32_t T_numWorkers> \
+template<typename T_Acc, typename TParticlesBox, typename CellIndex, typename Functor, typename T_Filter \
          BOOST_PP_ENUM_TRAILING(N, TEMPLATE_ARGS, _)> \
-DINLINE void Cell2Particle<SuperCellSize>::operator() \
-(T_Acc const & acc, TParticlesBox pb, const CellIndex& cellIndex, Functor functor \
+DINLINE void Cell2Particle<SuperCellSize, T_numWorkers>::operator() \
+(T_Acc const & acc, TParticlesBox pb, const uint32_t workerIdx, const CellIndex& cellIndex, Functor functor, T_Filter filter \
 BOOST_PP_ENUM_TRAILING(N, NORMAL_ARGS, _)) \
 { \
+    using namespace mappings::threads; \
+    constexpr uint32_t numWorkers = T_numWorkers; \
+    constexpr lcellId_t maxParticlesInFrame = pmacc::math::CT::volume< typename TParticlesBox::FrameType::SuperCellSize >::type::value; \
     CellIndex superCellIdx = cellIndex / (CellIndex)SuperCellSize::toRT(); \
-    \
-    uint16_t linearThreadIdx = threadIdx.z * SuperCellSize::x::value * SuperCellSize::y::value + \
-                               threadIdx.y * SuperCellSize::x::value + threadIdx.x; \
     \
     typedef typename TParticlesBox::FramePtr FramePtr; \
     typedef typename TParticlesBox::FrameType Frame; \
     PMACC_SMEM( acc, frame, FramePtr ); \
     PMACC_SMEM( acc, particlesInSuperCell, uint16_t ); \
+    ForEachIdx< \
+        IdxConfig< \
+            1, \
+            numWorkers \
+        > \
+    > onlyMaster{ workerIdx }; \
     \
-    if(linearThreadIdx == 0) \
-    { \
-        frame = pb.getLastFrame(superCellIdx); \
-        particlesInSuperCell = pb.getSuperCell(superCellIdx).getSizeLastFrame(); \
-    } \
+    onlyMaster( \
+        [&]( \
+            uint32_t const, \
+            uint32_t const \
+        ) \
+        { \
+            frame = pb.getLastFrame(superCellIdx); \
+            particlesInSuperCell = pb.getSuperCell(superCellIdx).getSizeLastFrame(); \
+        } \
+    ); \
     __syncthreads(); \
     \
     if (!frame.isValid()) return; /* leave kernel if we have no frames*/ \
     \
+    auto accFilter = filter( \
+        acc, \
+        superCellIdx - GUARD_SIZE, \
+        mappings::threads::WorkerCfg< numWorkers >{ workerIdx } \
+    ); \
+    \
     while (frame.isValid()) \
     { \
-        if (linearThreadIdx < particlesInSuperCell) \
-        { \
-            functor( \
-                acc, \
-                frame, linearThreadIdx \
-                BOOST_PP_ENUM_TRAILING(N, ARGS, _) \
-                ); \
-        } \
+        using ParticleDomCfg = IdxConfig< \
+            maxParticlesInFrame, \
+            numWorkers \
+        >; \
+        ForEachIdx< ParticleDomCfg > forEachParticle( workerIdx ); \
+        forEachParticle( \
+            [&]( \
+                uint32_t const linearThreadIdx, \
+                uint32_t const \
+            ) \
+            { \
+                if (linearThreadIdx < particlesInSuperCell) \
+                { \
+                    if( \
+                        accFilter( \
+                            acc, \
+                            frame[ linearThreadIdx ] \
+                        ) \
+                    ) \
+                        functor( \
+                            acc, \
+                            frame, linearThreadIdx \
+                            BOOST_PP_ENUM_TRAILING(N, ARGS, _) \
+                            ); \
+                } \
+            } \
+        ); \
         __syncthreads(); \
-        if (linearThreadIdx == 0) \
-        { \
-            frame = pb.getPreviousFrame(frame); \
-            particlesInSuperCell = pmacc::math::CT::volume<SuperCellSize>::type::value; \
-        } \
+        onlyMaster( \
+            [&]( \
+                uint32_t const, \
+                uint32_t const \
+            ) \
+            { \
+                frame = pb.getPreviousFrame(frame); \
+                particlesInSuperCell = pmacc::math::CT::volume<SuperCellSize>::type::value; \
+            } \
+        ); \
         __syncthreads(); \
     } \
 }
@@ -86,4 +133,5 @@ BOOST_PP_REPEAT(5, CELL2PARTICLE_OPERATOR, _)
 #undef NORMAL_ARGS
 #undef ARGS
 
-}
+} // namespace particleAccess
+} // namespace picongpu

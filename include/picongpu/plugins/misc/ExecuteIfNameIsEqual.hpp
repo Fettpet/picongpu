@@ -1,4 +1,4 @@
-/* Copyright 2017 Rene Widera
+/* Copyright 2017-2018 Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -46,11 +46,12 @@ namespace misc
         >
         void operator( )(
             std::string filterName,
+            uint32_t const currentStep,
             T_Kernel const unaryFunctor
         ) const
         {
             if( filterName == T_Filter::getName( ) )
-                unaryFunctor( T_Filter{ } );
+                unaryFunctor( particles::filter::IUnary< T_Filter >{ currentStep } );
         }
     };
 } // namespace misc

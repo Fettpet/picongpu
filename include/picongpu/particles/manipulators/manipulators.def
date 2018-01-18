@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Rene Widera, Axel Huebl
+/* Copyright 2014-2018 Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -37,3 +37,4 @@
 #include "picongpu/particles/manipulators/binary/DensityWeighting.def"
 #include "picongpu/particles/manipulators/binary/Assign.def"
 #include "picongpu/particles/manipulators/binary/ProtonTimesWeighting.def"
+#include "picongpu/particles/manipulators/binary/UnboundElectronsTimesWeighting.def"

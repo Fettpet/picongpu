@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Rene Widera
+/* Copyright 2015-2018 Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -38,38 +38,37 @@ namespace generic
      *
      *
      * @tparam T_Functor user defined unary functor
-     * @tparam T_Distribution random number distribution
-     * @tparam T_Seed seed to initialize the random number generator
+     * @tparam T_Distribution pmacc::random::distributions, random number distribution
      * @tparam T_SpeciesType type of the species that shall be manipulated
      *
-     * example: add
+     * example for `particle.param`: add
      *   @code{.cpp}
      *   #include <pmacc/nvidia/rng/distributions/Uniform_float.hpp>
      *
-     *   struct RandomXFunctor
+     *   struct FunctorRandomX
      *   {
      *       template< typename T_Rng, typename T_Particle >
      *       HDINLINE void operator()( T_Rng& rng, T_Particle& particle )
      *       {
      *           particle[ position_ ].x() = rng();
      *       }
+     *       static constexpr char const * name = "randomXPos";
      *   };
      *
-     *   using RandomXPos = FreeRng<
-     *      RandomXFunctor,
-     *      nvidia::rng::distributions::Uniform_float
+     *   using RandomXPos = generic::FreeRng<
+     *      FunctorRandomX,
+     *      pmacc::random::distributions::Uniform< float_X >
      *   >;
-     *   particles::Manipulate< RandomXPos, SPECIES_NAME >
      *   @endcode
-     *   to `InitPipeline` in `speciesInitialization.param`
+     *
+     * and to `InitPipeline` in `speciesInitialization.param`:
+     *   @code{.cpp}
+     *   Manipulate< manipulators::RandomXPos, SPECIES_NAME >
+     *   @endcode
      */
     template<
         typename T_Functor,
         typename T_Distribution,
-        typename T_Seed = boost::mpl::integral_c<
-            size_t,
-            FREERNG_SEED
-        >,
         typename T_SpeciesType = boost::mpl::_1
     >
     struct FreeRng;

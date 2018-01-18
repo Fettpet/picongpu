@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Rene Widera
+/* Copyright 2017-2018 Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -17,37 +17,31 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#include "picongpu/plugins/misc/removeSpaces.hpp"
 
-#include "picongpu/simulation_defines.hpp"
-
-#include <boost/mpl/integral_c.hpp>
-#include <boost/mpl/placeholders.hpp>
+#include <string>
+#include <algorithm>
 
 
 namespace picongpu
 {
-namespace particles
+namespace plugins
 {
-namespace manipulators
+namespace misc
 {
-namespace generic
-{
-namespace detail
-{
+    std::string removeSpaces( std::string value )
+    {
+        value.erase(
+            std::remove(
+                value.begin(),
+                value.end(),
+                ' '
+            ),
+            value.end()
+        );
 
-    template<
-        typename T_Distribution,
-        typename T_Seed = boost::mpl::integral_c<
-            size_t,
-            FREERNG_SEED
-        >,
-        typename T_SpeciesType = boost::mpl::_1
-    >
-    struct Rng;
-
-} // namespace detail
-} // namespace generic
-} // namespace manipulators
-} // namespace particles
+        return value;
+    }
+} // namespace misc
+} // namespace plugins
 } // namespace picongpu

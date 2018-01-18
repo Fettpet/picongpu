@@ -1,4 +1,4 @@
-/* Copyright 2017 Rene Widera
+/* Copyright 2017-2018 Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -211,14 +211,14 @@ namespace acc
         -> acc::Filtered<
             T_FilterOperator,
             decltype(
-                std::declval< Filter >( )(
+                alpaka::core::declval< Filter >( )(
                     acc,
                     domainOffset,
                     workerCfg
                 )
             ),
             decltype(
-                std::declval< Functor >( )(
+                alpaka::core::declval< Functor >( )(
                     acc,
                     domainOffset,
                     workerCfg
@@ -229,14 +229,14 @@ namespace acc
             return acc::Filtered<
                 T_FilterOperator,
                 decltype(
-                    std::declval< Filter >( )(
+                    alpaka::core::declval< Filter >( )(
                         acc,
                         domainOffset,
                         workerCfg
                     )
                 ),
                 decltype(
-                    std::declval< Functor >( )(
+                    alpaka::core::declval< Functor >( )(
                         acc,
                         domainOffset,
                         workerCfg

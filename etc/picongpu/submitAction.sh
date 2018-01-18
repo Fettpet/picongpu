@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2013-2017 Axel Huebl, Rene Widera, Felix Schmitt
+# Copyright 2013-2018 Axel Huebl, Rene Widera, Felix Schmitt
 #
 # This file is part of PIConGPU.
 #
@@ -33,7 +33,7 @@ fi
 
 ## copy memcheck programs
 cd $TBG_dstPath
-mkdir input
+mkdir -p input
 cp -ar $TBG_projectPath/bin input
 cp -ar $TBG_projectPath/include input
 cp -ar $TBG_projectPath/etc input

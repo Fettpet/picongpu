@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Rene Widera, Felix Schmitt, Axel Huebl,
+/* Copyright 2014-2018 Rene Widera, Felix Schmitt, Axel Huebl,
  *                     Alexander Grund
  *
  * This file is part of PIConGPU.
@@ -100,7 +100,8 @@ public:
 
         /* count total number of particles on the device */
         log<picLog::INPUT_OUTPUT > ("ADIOS:   (begin) count particles: %1%") % T_SpeciesFilter::getName();
-        typename T_SpeciesFilter::Filter particleFilter{};
+        // enforce that the filter interface is fulfilled
+        particles::filter::IUnary< typename T_SpeciesFilter::Filter > particleFilter{ params->currentStep };
         uint64_cu totalNumParticles = 0;
         totalNumParticles = pmacc::CountParticles::countOnDevice < CORE + BORDER > (
                                                                                     *speciesTmp,

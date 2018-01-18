@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Rene Widera, Axel Huebl
+/* Copyright 2015-2018 Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include "picongpu/particles/manipulators/generic/Free.def"
-
 
 namespace picongpu
 {
@@ -39,6 +37,8 @@ namespace acc
         operator( )( T_Args && ... )
         {
         }
+
+        static constexpr char const * name = "None";
     };
 } // namespace acc
 

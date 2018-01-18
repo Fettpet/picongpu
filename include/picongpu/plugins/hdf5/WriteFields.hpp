@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Axel Huebl, Felix Schmitt, Heiko Burau, Rene Widera,
+/* Copyright 2014-2018 Axel Huebl, Felix Schmitt, Heiko Burau, Rene Widera,
  *                     Benjamin Worpitz
  *
  * This file is part of PIConGPU.
@@ -149,11 +149,7 @@ private:
      */
     static std::string getName()
     {
-        std::stringstream str;
-        str << Species::FrameType::getName();
-        str << "_";
-        str << Solver().getName();
-        return str.str();
+        return FieldTmpOperation<Solver, Species>::getName();
     }
 
     /** Get the unit for the result from the solver*/

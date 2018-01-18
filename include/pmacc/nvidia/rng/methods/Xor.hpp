@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Heiko Burau, Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -40,9 +40,9 @@ namespace methods
          using Gen =
             decltype(
                 ::alpaka::rand::generator::createDefault(
-                    std::declval<T_Acc const &>(),
-                    std::declval<uint32_t &>(),
-                    std::declval<uint32_t &>()));
+                    alpaka::core::declval<T_Acc const &>(),
+                    alpaka::core::declval<uint32_t &>(),
+                    alpaka::core::declval<uint32_t &>()));
         PMACC_ALIGN(gen, Gen);
     public:
         typedef Gen StateType;

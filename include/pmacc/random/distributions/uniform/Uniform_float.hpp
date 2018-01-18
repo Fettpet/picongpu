@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Alexander Grund, Rene Widera
+/* Copyright 2015-2018 Alexander Grund, Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -98,13 +98,13 @@ namespace detail
 
     /** Returns a random float value uniformly distributed in [0,1)
      *
-     * Reduce the random range to `2^24`.
+     * Number of unique random numbers is reduced to `2^24`.
      * Uses a uniform distance of `2^-24` (`epsilon/2`) between each possible
      * random number.
      */
     template<class T_RNGMethod>
     class Uniform<
-        uniform::ExcludeOne<float>::Use24Bit,
+        uniform::ExcludeOne<float>::Reduced,
         T_RNGMethod,
         void
     >
@@ -127,7 +127,7 @@ namespace detail
         }
     };
 
-    /** Returns a random float value uniformly distributed in [0,1)
+    /** Returns a random float value uniformly distributed in (0,1)
      *
      * Loops until a random value inside the defined range is created.
      * The runtime of this method is not deterministic.
@@ -164,32 +164,6 @@ namespace detail
             }
             while(true);
         }
-    };
-
-    /** Returns a random float value uniformly distributed in [0,1)
-     *
-     * Equivalent to uniform::ExcludeOne<float>::Use24Bit
-     */
-    template<class T_RNGMethod>
-    class Uniform<float, T_RNGMethod, void> :
-        public pmacc::random::distributions::Uniform<
-            uniform::ExcludeOne<float>::Use24Bit,
-            T_RNGMethod
-        >
-    {
-    };
-
-    /** Returns a random float value uniformly distributed in [0,1)
-     *
-     * Equivalent to uniform::ExcludeOne<float>::Use24Bit
-     */
-    template<class T_RNGMethod>
-    class Uniform<uniform::ExcludeOne<float>, T_RNGMethod, void> :
-        public pmacc::random::distributions::Uniform<
-            uniform::ExcludeOne<float>::Use24Bit,
-            T_RNGMethod
-        >
-    {
     };
 
 }  // namespace detail

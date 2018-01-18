@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Rene Widera, Felix Schmitt
+/* Copyright 2013-2018 Rene Widera, Felix Schmitt
  *
  * This file is part of PIConGPU.
  *
@@ -95,7 +95,7 @@ public:
      */
     HINLINE void operator()(ThreadParams* params, const uint32_t restartChunkSize)
     {
-        std::string const speciesName = FrameType::getName() + "_all";
+        std::string const speciesName = FrameType::getName();
         log<picLog::INPUT_OUTPUT > ("HDF5: (begin) load species: %1%") % speciesName;
         DataConnector &dc = Environment<>::get().DataConnector();
         GridController<simDim> &gc = Environment<simDim>::get().GridController();

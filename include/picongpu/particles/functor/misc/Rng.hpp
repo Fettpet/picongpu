@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Rene Widera, Alexander Grund
+/* Copyright 2015-2018 Rene Widera, Alexander Grund
  *
  * This file is part of PIConGPU.
  *
@@ -20,10 +20,14 @@
 #pragma once
 
 #include "picongpu/simulation_defines.hpp"
+#include "picongpu/particles/functor/misc/RngWrapper.hpp"
+
 #include <pmacc/nvidia/rng/RNG.hpp>
 #include <pmacc/nvidia/rng/methods/Xor.hpp>
 #include <pmacc/mpi/SeedPerRank.hpp>
 #include <pmacc/traits/GetUniqueTypeId.hpp>
+#include <pmacc/random/methods/XorMin.hpp>
+#include <pmacc/random/RNGProvider.hpp>
 
 #include <utility>
 #include <type_traits>
@@ -34,22 +38,18 @@ namespace picongpu
 {
 namespace particles
 {
-namespace manipulators
+namespace functor
 {
-namespace generic
-{
-namespace detail
+namespace misc
 {
     /** call simple free user defined functor and provide a random number generator
      *
      * @tparam T_Distribution random number distribution
-     * @tparam T_Seed seed to initialize the random number generator
      * @tparam T_SpeciesType type of the species that shall used to generate a unique
      *                       seed to initialize the random number generator
      */
     template<
         typename T_Distribution,
-        typename T_Seed,
         typename T_SpeciesType
     >
     struct Rng
@@ -57,21 +57,24 @@ namespace detail
 
         using Distribution = T_Distribution;
         using SpeciesType = T_SpeciesType;
-
-        template< typename T_Acc >
-        using RngType = pmacc::nvidia::rng::RNG<
-            nvidia::rng::methods::Xor< T_Acc >,
-            decltype( Distribution::get( std::declval< T_Acc >( ) ) )
+        using RNGFactory = pmacc::random::RNGProvider<
+            simDim,
+            pmacc::random::methods::XorMin< cupla::Acc >
+        >;
+        using RngHandle = typename RNGFactory::Handle;
+        using RandomGen = RngWrapper<
+            cupla::Acc,
+            typename RngHandle::GetRandomType< Distribution >::type
         >;
 
         /** constructor
          *
          * @param currentStep current simulation time step
          */
-        HINLINE Rng( uint32_t currentStep )
+        HINLINE Rng( uint32_t currentStep ) : rngHandle( RNGFactory::createHandle() )
         {
-            hostInit( currentStep );
         }
+
 
         /** create functor a random number generator
          *
@@ -88,7 +91,8 @@ namespace detail
             typename T_Acc
         >
         HDINLINE
-        RngType< T_Acc > operator()(
+        RandomGen
+        operator()(
             T_Acc const & acc,
             DataSpace< simDim > const & localSupercellOffset,
             T_WorkerCfg const & workerCfg
@@ -99,64 +103,21 @@ namespace detail
             using FrameType = typename SpeciesType::FrameType;
             using SuperCellSize = typename FrameType::SuperCellSize;
 
-            uint32_t const cellIdx = DataSpaceOperations< simDim >::map(
-                localCells,
-                localSupercellOffset * SuperCellSize::toRT( ) +
-                    DataSpaceOperations< simDim >::template map< SuperCellSize >( workerCfg.getWorkerIdx( ) )
+            rngHandle.init(
+                localSupercellOffset * SuperCellSize::toRT() +
+                DataSpaceOperations< simDim >::template map< SuperCellSize >( workerCfg.getWorkerIdx( ) )
             );
-            RngType< T_Acc > const rng = nvrng::create(
-                nvidia::rng::methods::Xor< T_Acc >(
-                    acc,
-                    seed,
-                    cellIdx
-                ),
-                Distribution::get( acc )
+            return RandomGen(
+                acc,
+                rngHandle.applyDistribution< Distribution >()
             );
-            return rng;
         }
 
     private:
-
-        /** initialize member variables
-         *
-         * set RNG seed and calculate simulation local size
-         *
-         * @param currentStep time step of the simulation
-         */
-        HINLINE
-        void
-        hostInit( uint32_t currentStep )
-        {
-            using FrameType = typename SpeciesType::FrameType;
-
-            GlobalSeed globalSeed;
-            mpi::SeedPerRank<simDim> seedPerRank;
-            /* generate a global unique id by xor the
-             *   - gpu id `globalSeed()`
-             *   - a species id
-             *   - a fix id for this functor `FREERNG_SEED` (defined in `seed.param`)
-             */
-            seed = globalSeed() ^
-                pmacc::traits::GetUniqueTypeId<
-                    FrameType,
-                    uint32_t
-                >::uid() ^
-                T_Seed::value;
-            /* mixing the final seed with the current time step to avoid
-             * correlations between time steps
-             */
-            seed = seedPerRank( seed ) ^ currentStep;
-
-            SubGrid< simDim > const & subGrid = Environment< simDim >::get().SubGrid();
-            localCells = subGrid.getLocalDomain().size;
-        }
-
-        DataSpace< simDim > localCells;
-        uint32_t seed;
+        RngHandle rngHandle;
     };
 
-} // namespace detail
-} // namepsace generic
-} // namespace manipulators
+} // namepsace misc
+} // namespace functor
 } // namespace particles
 } // namespace picongpu

@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Alexander Grund, Rene Widera
+/* Copyright 2015-2018 Alexander Grund, Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -37,9 +37,9 @@ namespace methods
         using StateType =
             decltype(
                 ::alpaka::rand::generator::createDefault(
-                    std::declval<T_Acc const &>(),
-                    std::declval<uint32_t &>(),
-                    std::declval<uint32_t &>()
+                    alpaka::core::declval<T_Acc const &>(),
+                    alpaka::core::declval<uint32_t &>(),
+                    alpaka::core::declval<uint32_t &>()
                 )
             );
 
@@ -67,6 +67,21 @@ namespace methods
             return ::alpaka::rand::distribution::createUniformUint< uint32_t >(
                 acc
             )( state );
+        }
+
+        DINLINE uint64_t
+        get64Bits(
+            T_Acc const & acc,
+            StateType& state
+        ) const
+        {
+            /* Two 32bit values are packed into a 64bit value because alpaka is not
+             * supporting 64bit integer random numbers
+             */
+            uint64_t result = get32Bits( acc, state);
+            result <<= 32;
+            result ^= get32Bits( acc, state);
+            return result;
         }
 
         static std::string

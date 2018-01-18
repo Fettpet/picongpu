@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera, Felix Schmitt,
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Felix Schmitt,
  *                     Richard Pausch
  *
  * This file is part of PIConGPU.
@@ -39,7 +39,7 @@ class SliceFieldPrinterMulti : public ILightweightPlugin
 private:
     std::string name;
     std::string prefix;
-    std::vector<uint32_t> notifyPeriod;
+    std::vector<std::string> notifyPeriod;
     std::vector<std::string> fileName;
     std::vector<int> plane;
     std::vector<float_X> slicePoint;

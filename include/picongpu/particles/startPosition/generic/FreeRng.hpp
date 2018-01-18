@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Rene Widera, Alexander Grund
+/* Copyright 2015-2018 Rene Widera, Alexander Grund
  *
  * This file is part of PIConGPU.
  *
@@ -21,7 +21,7 @@
 
 #include "picongpu/simulation_defines.hpp"
 #include "picongpu/particles/startPosition/generic/FreeRng.def"
-#include "picongpu/particles/manipulators/generic/detail/Rng.hpp"
+#include "picongpu/particles/functor/misc/Rng.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -105,25 +105,21 @@ namespace acc
     template<
         typename T_Functor,
         typename T_Distribution,
-        typename T_Seed,
         typename T_SpeciesType
     >
     struct FreeRng :
         protected T_Functor,
-        private picongpu::particles::manipulators::generic::detail::Rng<
+        private picongpu::particles::functor::misc::Rng<
             T_Distribution,
-            T_Seed,
             T_SpeciesType
         >
     {
-        using RngGenerator = picongpu::particles::manipulators::generic::detail::Rng<
+        using RngGenerator = picongpu::particles::functor::misc::Rng<
             T_Distribution,
-            T_Seed,
             T_SpeciesType
         >;
 
-        template< typename T_Acc >
-        using RngType = typename RngGenerator::template RngType< T_Acc >;
+        using RngType = typename RngGenerator::RandomGen;
 
         using Functor = T_Functor;
         using Distribution = T_Distribution;
@@ -197,10 +193,10 @@ namespace acc
         )
         -> acc::FreeRng<
             Functor,
-            RngType< T_Acc >
+            RngType
         >
         {
-            RngType< T_Acc > const rng = ( *static_cast< RngGenerator * >( this ) )(
+            RngType const rng = ( *static_cast< RngGenerator * >( this ) )(
                 acc,
                 localSupercellOffset,
                 workerCfg
@@ -208,21 +204,22 @@ namespace acc
 
             return acc::FreeRng<
                 Functor,
-                RngType< T_Acc >
+                RngType
             >(
                 *static_cast< Functor * >( this ),
                 rng
             );
         }
 
+        static
         HINLINE std::string
-        getName( ) const
+        getName( )
         {
             return std::string("FreeRNG");
         }
     };
 
-} // namepsace generic
+} // namespace generic
 } // namespace startPosition
 } // namespace particles
 } // namespace picongpu

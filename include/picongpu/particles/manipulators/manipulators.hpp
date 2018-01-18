@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Rene Widera, Axel Huebl
+/* Copyright 2014-2018 Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -18,8 +18,6 @@
  */
 
 #pragma once
-
-//#include "picongpu/particles/manipulators/IManipulator.hpp"
 
 #include "picongpu/particles/manipulators/generic/Free.hpp"
 #include "picongpu/particles/manipulators/generic/FreeRng.hpp"

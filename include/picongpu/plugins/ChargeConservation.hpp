@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera, Axel Huebl
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -49,7 +49,7 @@ class ChargeConservation : public ISimulationPlugin
 private:
     std::string name;
     std::string prefix;
-    uint32_t notifyPeriod;
+    std::string notifyPeriod;
     const std::string filename;
     MappingDesc* cellDescription;
     std::ofstream output_file;

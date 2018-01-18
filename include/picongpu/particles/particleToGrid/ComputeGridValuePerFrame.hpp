@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Axel Huebl, Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Axel Huebl, Heiko Burau, Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -54,9 +54,9 @@ ComputeGridValuePerFrame<T_ParticleShape, T_DerivedAttribute>::getUnitDimension(
 
 template<class T_ParticleShape, class T_DerivedAttribute>
 HINLINE std::string
-ComputeGridValuePerFrame<T_ParticleShape, T_DerivedAttribute>::getName() const
+ComputeGridValuePerFrame<T_ParticleShape, T_DerivedAttribute>::getName()
 {
-    return T_DerivedAttribute().getName();
+    return T_DerivedAttribute::getName();
 }
 
 template<class T_ParticleShape, class T_DerivedAttribute>

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Axel Huebl, Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Axel Huebl, Heiko Burau, Rene Widera
  *
  * This file is part of PMacc.
  *
@@ -45,7 +45,7 @@ namespace detail
         using Dist =
             decltype(
                 ::alpaka::rand::distribution::createUniformReal<Type>(
-                    std::declval<T_Acc const &>()));
+                    alpaka::core::declval<T_Acc const &>()));
         PMACC_ALIGN(dist, Dist);
     public:
 

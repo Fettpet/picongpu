@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera, Felix Schmitt,
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Felix Schmitt,
  *                     Richard Pausch
  *
  * This file is part of PIConGPU.
@@ -40,7 +40,7 @@ template<typename Field>
 class SliceFieldPrinter : public ILightweightPlugin
 {
 private:
-    uint32_t notifyPeriod;
+    std::string notifyPeriod;
     bool sliceIsOK;
     std::string fileName;
     int plane;

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Heiko Burau, Rene Widera, Felix Schmitt,
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Felix Schmitt,
  *                     Richard Pausch
  *
  * This file is part of PIConGPU.
@@ -52,7 +52,7 @@ void SliceFieldPrinterMulti<Field>::pluginRegisterHelp(po::options_description& 
 {
     desc.add_options()
         ((this->prefix + ".period").c_str(),
-        po::value<std::vector<uint32_t> > (&this->notifyPeriod)->multitoken(), "notify period");
+        po::value<std::vector<std::string> > (&this->notifyPeriod)->multitoken(), "notify period");
     desc.add_options()
         ((this->prefix + ".fileName").c_str(),
         po::value<std::vector<std::string> > (&this->fileName)->multitoken(), "file name to store slices in");

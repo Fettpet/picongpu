@@ -1,4 +1,4 @@
-/* Copyright 2017 Rene Widera
+/* Copyright 2017-2018 Rene Widera
  *
  * This file is part of PIConGPU.
  *
@@ -52,6 +52,27 @@ namespace misc
         static std::string getName()
         {
             return Species::FrameType::getName() + "_" + Filter::getName();
+        }
+    };
+
+    /** species without a filter
+     *
+     * This class fulfills the interface of SpeciesFilter for a species
+     * but keeps the species name without adding the filter suffix.
+     */
+    template< typename T_Species >
+    struct UnfilteredSpecies
+    {
+        using Filter = particles::filter::All;
+        using Species = T_Species;
+
+        /** get name of the filtered species
+         *
+         * @return <speciesName>
+         */
+        static std::string getName()
+        {
+            return Species::FrameType::getName();
         }
     };
 

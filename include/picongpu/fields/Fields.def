@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Rene Widera, Axel Huebl
+/* Copyright 2013-2018 Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -38,6 +38,15 @@ namespace picongpu
 
         using LowerMargin = typename Solver::LowerMargin;
         using UpperMargin = typename Solver::UpperMargin;
+
+        static std::string getName()
+        {
+            std::stringstream str;
+            str << T_Species::FrameType::getName();
+            str << "_";
+            str << T_Solver::getName();
+            return str.str();
+        }
     };
 
     /** Tmp (at the moment: scalar) field for plugins and tmp data like

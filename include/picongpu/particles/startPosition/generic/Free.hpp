@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Rene Widera, Axel Huebl
+/* Copyright 2013-2018 Rene Widera, Axel Huebl
  *
  * This file is part of PIConGPU.
  *
@@ -146,13 +146,14 @@ namespace acc
          * @param configuration of the worker
          */
         template<
+            typename T,
             typename T_WorkerCfg,
             typename T_Acc
         >
         HDINLINE acc::Free< Functor >
         operator()(
             T_Acc const & acc,
-            DataSpace< simDim > const &,
+            T const &,
             T_WorkerCfg const &
         )
         {

@@ -73,6 +73,15 @@ zlib
 - *Debian/Ubuntu:* ``sudo apt-get install zlib1g-dev``
 - *Arch Linux:* ``sudo pacman --sync zlib``
 - *Spack:* ``spack install zlib``
+- *from source:*
+
+  - ``./configure --prefix=$HOME/lib/zlib``
+  - ``make && make install``
+- *environent:* (assumes install from source in ``$HOME/lib/zlib``)
+
+  - ``export ZLIB_ROOT=$HOME/lib/zlib``
+  - ``export LD_LIBRARY_PATH=$ZLIB_ROOT/lib:$LD_LIBRARY_PATH``
+  - ``export CMAKE_PREFIX_PATH=$ZLIB_ROOT:$CMAKE_PREFIX_PATH``
 
 boost
 """""
@@ -125,7 +134,7 @@ Optional Libraries
 
 CUDA
 """"
-- `7.5+ <https://developer.nvidia.com/cuda-downloads>`_
+- `8.0+ <https://developer.nvidia.com/cuda-downloads>`_
 - required if you want to run on Nvidia GPUs
 - *Debian/Ubuntu:* ``sudo apt-get install nvidia-cuda-toolkit``
 - *Arch Linux:* ``sudo pacman --sync cuda``
@@ -147,8 +156,8 @@ pngwriter
 - *Spack:* ``spack install pngwriter``
 - *from source:*
 
-  - download our modified version from `github.com/pngwriter/pngwriter <https://github.com/pngwriter/pngwriter>`_
-  - Requires [libpng](http://www.libpng.org/)
+  - download from `github.com/pngwriter/pngwriter <https://github.com/pngwriter/pngwriter>`_
+  - Requires `libpng <http://www.libpng.org>`_
 
     - *Debian/Ubuntu:* ``sudo apt-get install libpng-dev``
     - *Arch Linux:* ``sudo pacman --sync libpng``
