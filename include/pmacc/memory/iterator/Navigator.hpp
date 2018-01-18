@@ -1,70 +1,24 @@
-
-/**
- * \struct Navigator
- @brief This is the default implementation of the navigator. The task of the 
- navigator is to define the first element, the next element and an after last 
- element. If the navigator is bidirectional it need also a last element, a previous
- element and a before first element. 
- 
- The navigator has two traits for parallel 
- walking through the container. The first one is TOffset. This is used to get the 
- distance from the first element of the container to the first element which will
- be accessed. This trait can be used to map the thread ID (for example offset 
- = threadIdx.x). The second trait is the jumpsize. The jumpsize is the distance
- between two iterator elements. The number of threads can be mapped on the jump-
- size. With this two traits you can go parallel over all elements and touch each
- element only one times. 
- 
- We had three/six traits for the behaviour of the container. The first three traits
- are 
- 1. define the first element of the container,
- 2. define a next element of the container,
- 3. define a after last element of the container.
- If the navigator is bidirectional three additional traits are needed
- 4. define the last element within the container
- 5. define a previous element of the container
- 6. define a before first element of the container.
- The navigator use this 8 traits to define methodes for parallel iteration though
- the container.
- 
- @tparam TContainer Type of the container,
- @tparam TComponent Type of the component of the container.
- @tparam TOffset Policy to get the offset. You need to specify the () operator.
- @tparam TJumpsize Policy to specify the Jumpsize. It need the operator ().
- @tparam TIndex Type of the index. The index is used to specify the iterator 
- position.
- @tparam TContainerSize Trait to specify the size of a container. It need the 
- function operator()(TContainer*). TContainer is a pointer to the container 
- instance over which the iterator walks.
- @tparam TFirstElement Trait to set the index to the first element. It need the 
- function operator()(TContainer*, TIndex&, const TRange). TRange is the result 
- type of TOffset's (). TContainer is a pointer to the container 
- instance over which the iterator walks. TIndex is used to describe the position.
- TRange is the offset.
- @tparam TNextElement Trait to set the index to the next element. The trait need 
- the function TRange operator()(TContainer*, TIndex&, TRange). The TRange 
- parameter is used to handle the jumpsize. The result of this function is the 
- remaining jumpsize. A little example. Your container has 10 elements and your
- iterator is the the 8 element. Your jumpsize is 5. This means the new position
- would be 13. So the result of the function is 3, the remaining jumpsize.
- @tparam TAfterLastElement This Trait is used to check whether the iteration is 
- after the last element. The function header is 
- bool operator()(TContainer*, TIndex&). It returns true, if the end is reached, 
- and false otherwise.
- @tparam TLastElement This trait gives the last element which the iterator would
- access, befor the end is reached, in a forward iteration case. The function 
- head is operator()(TContainer*, TIndex&, const TRange). This trait is only needed
- if the navigator is bidirectional. 
- @tparam TPreviousElement Trait to set the index to the previous element. The 
- trait need the function TRange operator()(TContainer*, TIndex&, TRange). This 
- trait is only needed if the navigator is bidirectional. For fourther 
- informations see TNextElement.
- @tparam TBeforeFirstElement Used to check whether the iterator is before the
- first element. The function header is bool operator()(TContainer*, TIndex&). 
- It returns true, if the end is reached, and false otherwise.
- @tparam isBidirectional Set the navigator to bidirectional (true) or to forward
- only (false)
+/* Copyright 2013-2018 Sebastian Hahn
+ *
+ * This file is part of PMacc.
+ *
+ * PMacc is free software: you can redistribute it and/or modify
+ * it under the terms of either the GNU General Public License or
+ * the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PMacc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with PMacc.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 #pragma once
 #include "pmacc/forward.hpp"
@@ -110,6 +64,73 @@ struct OffsetRangeType
 
 } // namespace details
 
+
+/**
+* \struct Navigator
+@brief This is the default implementation of the navigator. The task of the 
+navigator is to define the first element, the next element and an after last 
+element. If the navigator is bidirectional it need also a last element, a 
+previous element and a before first element. 
+
+The navigator has two traits for parallel 
+walking through the container. The first one is TOffset. This is used to get the 
+distance from the first element of the container to the first element which will
+be accessed. This trait can be used to map the thread ID (for example offset 
+= threadIdx.x). The second trait is the jumpsize. The jumpsize is the distance
+between two iterator elements. The number of threads can be mapped on the jump-
+size. With this two traits you can go parallel over all elements and touch each
+element only one times. 
+ 
+We had three/six traits for the behaviour of the container. The first three
+traits are :
+1. define the first element of the container,
+2. define a next element of the container,
+3. define a after last element of the container.
+If the navigator is bidirectional three additional traits are needed
+4. define the last element within the container
+5. define a previous element of the container
+6. define a before first element of the container.
+The navigator use this 8 traits to define methodes for parallel iteration though
+the container.
+ 
+@tparam TContainer Type of the container,
+@tparam TComponent Type of the component of the container.
+@tparam TOffset Policy to get the offset. You need to specify the () operator.
+@tparam TJumpsize Policy to specify the Jumpsize. It need the operator ().
+@tparam TIndex Type of the index. The index is used to specify the iterator 
+position.
+@tparam TContainerSize Trait to specify the size of a container. It need the 
+function operator()(TContainer*). TContainer is a pointer to the container 
+instance over which the iterator walks.
+@tparam TFirstElement Trait to set the index to the first element. It need the 
+function operator()(TContainer*, TIndex&, const TRange). TRange is the result 
+type of TOffset's (). TContainer is a pointer to the container 
+instance over which the iterator walks. TIndex is used to describe the position.
+TRange is the offset.
+@tparam TNextElement Trait to set the index to the next element. The trait need 
+the function TRange operator()(TContainer*, TIndex&, TRange). The TRange 
+parameter is used to handle the jumpsize. The result of this function is the 
+remaining jumpsize. A little example. Your container has 10 elements and your
+iterator is the the 8 element. Your jumpsize is 5. This means the new position
+would be 13. So the result of the function is 3, the remaining jumpsize.
+@tparam TAfterLastElement This Trait is used to check whether the iteration is 
+after the last element. The function header is 
+bool operator()(TContainer*, TIndex&). It returns true, if the end is reached, 
+and false otherwise.
+@tparam TLastElement This trait gives the last element which the iterator would
+access, befor the end is reached, in a forward iteration case. The function 
+head is operator()(TContainer*, TIndex&, const TRange). This trait is only 
+needed if the navigator is bidirectional. 
+@tparam TPreviousElement Trait to set the index to the previous element. The 
+trait need the function TRange operator()(TContainer*, TIndex&, TRange). This 
+trait is only needed if the navigator is bidirectional. For fourther 
+informations see TNextElement.
+@tparam TBeforeFirstElement Used to check whether the iterator is before the
+first element. The function header is bool operator()(TContainer*, TIndex&). 
+It returns true, if the end is reached, and false otherwise.
+@tparam isBidirectional Set the navigator to bidirectional (true) or to forward
+only (false)
+*/
 template<
     typename TContainer,
     typename TComponent,
@@ -129,22 +150,22 @@ template<
 struct Navigator
 {
 // define the types 
-    typedef typename std::decay<TContainer>::type                   ContainerType;
-    typedef ContainerType*                                          ContainerPtr;
-    typedef ContainerType&                                          ContainerRef;
-    typedef TComponent                                              ComponentType;
-    typedef ComponentType*                                          ComponentPtr;
-    typedef TJumpsize                                               JumpsizeType;
-    typedef TOffset                                                 OffsetType;
-    typedef TIndex                                                  IndexType;
-    typedef TRange                                                  RangeType;
-    typedef TContainerSize                                          NumberElements;
-    typedef TFirstElement                                           FirstElement;
-    typedef TNextElement                                            NextElement;
-    typedef TAfterLastElement                                       AfterLastElement;
-    typedef TLastElement                                            LastElement;
-    typedef TPreviousElement                                        PreviousElement;
-    typedef TBeforeFirstElement                                     BeforeFirstElement;
+    typedef typename std::decay<TContainer>::type           ContainerType;
+    typedef ContainerType*                                  ContainerPtr;
+    typedef ContainerType&                                  ContainerRef;
+    typedef TComponent                                      ComponentType;
+    typedef ComponentType*                                  ComponentPtr;
+    typedef TJumpsize                                       JumpsizeType;
+    typedef TOffset                                         OffsetType;
+    typedef TIndex                                          IndexType;
+    typedef TRange                                          RangeType;
+    typedef TContainerSize                                  NumberElements;
+    typedef TFirstElement                                   FirstElement;
+    typedef TNextElement                                    NextElement;
+    typedef TAfterLastElement                               AfterLastElement;
+    typedef TLastElement                                    LastElement;
+    typedef TPreviousElement                                PreviousElement;
+    typedef TBeforeFirstElement                             BeforeFirstElement;
 
     
 public:
@@ -201,9 +222,10 @@ public:
             static_cast<RangeType>(jumpsize() * distance),
             containerSize);
         
-        // we need the distance from the last element to the current index position
-        // this is a round up
-        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) / static_cast<RangeType>(jumpsize());
+        // we need the distance from the last element to the current index 
+        // position this is a round up
+        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) 
+             / static_cast<RangeType>(jumpsize());
     }
     
     
@@ -235,8 +257,10 @@ public:
             containerSize);
         
 
-        // we need the distance from the last element to the current index position
-        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) / static_cast<RangeType>(jumpsize());
+        // we need the distance from the last element to the current index 
+        // position
+        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) 
+             / static_cast<RangeType>(jumpsize());
     }
     
     /**
@@ -306,8 +330,8 @@ public:
     }
     
     /**
-     * @brief set the iterator to the last element. It is possible that two iterators,
-     * the first start with begin, the second with last, never meet.
+     * @brief set the iterator to the last element. It is possible that two 
+     * iterators, the first start with begin, the second with last, never meet.
      * @param containerPtr pointer to the container, over which we iterate
      * @param index out: index of the before first element
      */
@@ -352,11 +376,16 @@ public:
         IndexType const & index)
     const
     {
-        return beforeFirstElement.test(containerPtr, index, offset(), containerSize);
+        return beforeFirstElement.test(
+            containerPtr, 
+            index, 
+            offset(), 
+            containerSize);
     }
     
     /**
-     * @brief this function determine the number of elements within the container
+     * @brief this function determine the number of elements within the 
+     * container
      * @param containerPtr pointer to the container, you like to know the number
      * of elements
      * @return number of elements within the container
@@ -371,8 +400,8 @@ public:
     }
     
     /**
-     * @brief this function determine the number of elements over which the navigator
-     * goes. I.e sizeContainer / jumpsize
+     * @brief this function determine the number of elements over which the
+     * navigator goes. I.e sizeContainer / jumpsize
      * @param containerPtr pointer to the container, you like to know the number
      * of elements
      * @return number of elements the navigator can access
@@ -385,8 +414,9 @@ public:
         assert(containerPtr != nullptr); // containerptr should be valid
         auto const nbElem = nbElements(containerPtr);
         auto const off = offset();
-        assert(nbElem >= off /* The offset need to be smaller or equal than the container size */);
-        return (nbElem - off + jumpsize() - static_cast<RangeType>(1)) / jumpsize();
+        assert(nbElem >= off);
+        return (nbElem - off + jumpsize() - static_cast<RangeType>(1)) 
+            / jumpsize();
     }
     
 //variables
@@ -426,22 +456,22 @@ struct Navigator<
     pmacc::details::UndefinedType,
     false>
 {
-    typedef pmacc::details::UndefinedType                            ContainerType;
-    typedef ContainerType*                                          ContainerPtr;
-    typedef ContainerType&                                          ContainerRef;
-    typedef pmacc::details::UndefinedType                            ComponentType;
-    typedef ComponentType*                                          ComponentPtr;
-    typedef TJumpsize                                               JumpsizeType;
-    typedef TOffset                                                 OffsetType;
-    typedef pmacc::details::UndefinedType                            IndexType;
-    typedef pmacc::details::UndefinedType                            RangeType;
-    typedef pmacc::details::UndefinedType                            NumberElements;
-    typedef pmacc::details::UndefinedType                            FirstElement;
-    typedef pmacc::details::UndefinedType                            NextElement;
-    typedef pmacc::details::UndefinedType                            AfterLastElement;
-    typedef pmacc::details::UndefinedType                            LastElement;
-    typedef pmacc::details::UndefinedType                            PreviousElement;
-    typedef pmacc::details::UndefinedType                            BeforeFirstElement;
+    typedef pmacc::details::UndefinedType                   ContainerType;
+    typedef ContainerType*                                  ContainerPtr;
+    typedef ContainerType&                                  ContainerRef;
+    typedef pmacc::details::UndefinedType                   ComponentType;
+    typedef ComponentType*                                  ComponentPtr;
+    typedef TJumpsize                                       JumpsizeType;
+    typedef TOffset                                         OffsetType;
+    typedef pmacc::details::UndefinedType                   IndexType;
+    typedef pmacc::details::UndefinedType                   RangeType;
+    typedef pmacc::details::UndefinedType                   NumberElements;
+    typedef pmacc::details::UndefinedType                   FirstElement;
+    typedef pmacc::details::UndefinedType                   NextElement;
+    typedef pmacc::details::UndefinedType                   AfterLastElement;
+    typedef pmacc::details::UndefinedType                   LastElement;
+    typedef pmacc::details::UndefinedType                   PreviousElement;
+    typedef pmacc::details::UndefinedType                   BeforeFirstElement;
     
     // the default constructors
     HDINLINE Navigator() = default;
@@ -472,8 +502,8 @@ struct Navigator<
 
 /**
  * @brief creates an navigator concept. It needs an offset and the jumpsize
- * @param offset distance from the begining of the container to the first position
- * of the iterator 
+ * @param offset distance from the begining of the container to the first 
+ * position of the iterator 
  * @param jumpsize distance between two elements within the container
  * 
  */
@@ -541,7 +571,7 @@ namespace details
         typedef typename _T::JumpsizeType               JumpsizeType;
         typedef typename _T::IndexType                  IndexType;
         typedef typename _T::RangeType                  RangeType;
-        typedef typename _T::NumberElements          NumberElements;
+        typedef typename _T::NumberElements             NumberElements;
         typedef typename _T::FirstElement               FirstElement;
         typedef typename _T::NextElement                NextElement;
         typedef typename _T::AfterLastElement           AfterLastElement;
@@ -556,20 +586,51 @@ template<
     typename TContainer,
     typename TContainerNoRef = typename std::decay<TContainer>::type,
     typename TNavigator,
-    typename TOffset = typename details::NavigatorTemplates<TNavigator>::OffsetType,
-    typename TJumpsize = typename details::NavigatorTemplates<TNavigator>::JumpsizeType,
-    typename TComponent = typename pmacc::traits::ComponentType<TContainerNoRef>::type,
-    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<TContainerNoRef>::type,
-    typename TContainerSize = typename pmacc::traits::NumberElements<TContainerNoRef>,
-    typename TIndex = typename pmacc::traits::IndexType<TContainerNoRef>::type,
-    typename TRange = typename std::decay<typename OffsetRangeType<TOffset>::type>::type,
-    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<TContainerNoRef, TIndex, TContainerCategorie>,
-    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<TContainerNoRef, TIndex, TContainerCategorie>,
-    typename TNextElement = typename pmacc::traits::navigator::NextElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>,
-    typename TLastElement = typename pmacc::traits::navigator::LastElement<TContainerNoRef, TIndex, TContainerCategorie>,
-    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>,
-    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>,
-    bool isBidirectional = not std::is_same<TLastElement, pmacc::details::UndefinedType>::value>
+    typename TOffset = typename details::NavigatorTemplates<
+        TNavigator>::OffsetType,
+    typename TJumpsize = typename details::NavigatorTemplates<
+        TNavigator>::JumpsizeType,
+    typename TComponent = typename pmacc::traits::ComponentType<
+        TContainerNoRef>::type,
+    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<
+        TContainerNoRef>::type,
+    typename TContainerSize = typename pmacc::traits::NumberElements<
+        TContainerNoRef>,
+    typename TIndex = typename pmacc::traits::IndexType<
+        TContainerNoRef>::type,
+    typename TRange = typename std::decay<
+        typename OffsetRangeType<
+            TOffset>::type>::type,
+    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>,
+    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>,
+    typename TNextElement = typename pmacc::traits::navigator::NextElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>,
+    typename TLastElement = typename pmacc::traits::navigator::LastElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>,
+    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>,
+    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>,
+    bool isBidirectional = not std::is_same<
+        TLastElement, 
+        pmacc::details::UndefinedType>::value>
 auto
 HDINLINE
 makeNavigator(
@@ -632,18 +693,45 @@ template<
     typename TContainerNoRef = typename std::decay<TContainer>::type,
     typename TOffset,
     typename TJumpsize,
-    typename TComponent = typename pmacc::traits::ComponentType<TContainerNoRef>::type,
-    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<TContainerNoRef>::type,
-    typename TContainerSize = typename pmacc::traits::NumberElements<TContainerNoRef>::type,
-    typename TIndex = typename pmacc::traits::IndexType<TContainerNoRef>::type,
+    typename TComponent = typename pmacc::traits::ComponentType<
+        TContainerNoRef>::type,
+    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<
+        TContainerNoRef>::type,
+    typename TContainerSize = typename pmacc::traits::NumberElements<
+        TContainerNoRef>::type,
+    typename TIndex = typename pmacc::traits::IndexType<
+        TContainerNoRef>::type,
     typename TRange = decltype(TOffset::operator()()),
-    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<TContainerNoRef, TIndex, TContainerCategorie>::type,
-    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<TContainerNoRef, TIndex, TContainerCategorie>::type,
-    typename TNextElement = typename pmacc::traits::navigator::NextElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>::type,
-    typename TLastElement = typename pmacc::traits::navigator::LastElement<TContainerNoRef, TIndex, TContainerCategorie>::type,
-    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>::type,
-    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<TContainerNoRef, TIndex, TRange, TContainerCategorie>::type,
-    bool isBidirectional = not std::is_same<TLastElement, pmacc::details::UndefinedType>::value>
+    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>::type,
+    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>::type,
+    typename TNextElement = typename pmacc::traits::navigator::NextElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>::type,
+    typename TLastElement = typename pmacc::traits::navigator::LastElement<
+        TContainerNoRef, 
+        TIndex, 
+        TContainerCategorie>::type,
+    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>::type,
+    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
+        TContainerNoRef, 
+        TIndex, 
+        TRange, 
+        TContainerCategorie>::type,
+    bool isBidirectional = not std::is_same<
+        TLastElement, 
+        pmacc::details::UndefinedType>::value>
 auto 
 HDINLINE
 makeNavigator(

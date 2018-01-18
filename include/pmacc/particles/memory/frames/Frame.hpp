@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 Rene Widera, Alexander Grund
+/* Copyright 2013-2018 Rene Widera, Alexander Grund, Sebastian Hahn
  *
  * This file is part of PMacc.
  *

@@ -1,4 +1,42 @@
+/* Copyright 2013-2018 Sebastian Hahn
+ *
+ * This file is part of PMacc.
+ *
+ * PMacc is free software: you can redistribute it and/or modify
+ * it under the terms of either the GNU General Public License or
+ * the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PMacc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with PMacc.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
+
+
+#pragma once
+#include "pmacc/memory/iterator/DeepIterator.hpp"
+#include "pmacc/forward.hpp"
+#include "pmacc/memory/iterator/Prescription.hpp"
+#include "pmacc/memory/iterator/Accessor.hpp"
+#include "pmacc/memory/iterator/Navigator.hpp"
+#include "pmacc/memory/iterator/Policies.hpp"
+#include "pmacc/traits/iterator/NumberElements.hpp"
+#include "pmacc/traits/iterator/Componenttype.hpp"
+#include "pmacc/types.hpp"
+#include <type_traits>
+namespace pmacc 
+{
+
+
 
 /**
  * \struct View
@@ -26,8 +64,8 @@
    @tparam TChild The child is the template parameter to realize nested 
    structures.  This template has several 
    requirements: 
-    1. it need to spezify an Iterator type. These type need operator++,  operator*,
-        operator=, operator== and a default constructor.
+    1. it need to spezify an Iterator type. These type need operator++, 
+       operator*, operator=, operator== and a default constructor.
     2. gotoNext(), nbElements(), setToBegin(), isAfterLast()
     3. gotoPrevious(), setToRbegin(), isBeforeFirst()
     3. TChild::ReturnType must be specified. This is the componenttype of the 
@@ -39,9 +77,9 @@
     8. copy constructor
     9. constructor with childtype && containertype as variables
    It it is recommended to use DeepIterator as TChild.
-      @tparam TIndexType Type of the index. The index is used to access the component 
-   within the container. The index must support a cast from int especially from
-   0.
+   @tparam TIndexType Type of the index. The index is used to access the 
+   component within the container. The index must support a cast from int 
+   especially from 0.
    @tparam hasConstantSizeSelf This flag is used to decide whether the container
    has a fixed number of elements. It is not needed that this count is known at 
    compiletime, but recommended. This trait is used to optimize the iteration to
@@ -52,26 +90,9 @@
    i. e. operator--. The navigator need the bidirectional functions
    @tparam isRandomAccessableSelf This flag is used to decide whether the 
    container is random accessable. If this flag is set to true, it enables the 
-   following operations: +, +=, -, -=, <,>,>=,<=. The accessor need the functions
-   lesser, greater, if this flag is set to true.
+   following operations: +, +=, -, -=, <,>,>=,<=. The accessor need the 
+   functions lesser, greater, if this flag is set to true.
  */
-
-#pragma once
-#include "pmacc/memory/iterator/DeepIterator.hpp"
-#include "pmacc/forward.hpp"
-#include "pmacc/memory/iterator/Prescription.hpp"
-#include "pmacc/memory/iterator/Accessor.hpp"
-#include "pmacc/memory/iterator/Navigator.hpp"
-#include "pmacc/memory/iterator/Policies.hpp"
-#include "pmacc/traits/iterator/NumberElements.hpp"
-#include "pmacc/traits/iterator/Componenttype.hpp"
-#include "pmacc/types.hpp"
-#include <type_traits>
-namespace pmacc 
-{
-
-
-
 template<
     typename TContainer,
     typename ComponentType,
@@ -85,16 +106,16 @@ template<
 struct View
 {
 public:
-    typedef TContainer ContainerType;
-    typedef ContainerType* ContainerPtr;
-    typedef ContainerType& ContainerRef;
+    typedef TContainer                      ContainerType;
+    typedef ContainerType*                  ContainerPtr;
+    typedef ContainerType&                  ContainerRef;
     
-    typedef ComponentType*                                              ComponentPtr;
-    typedef ComponentType&                                              ComponentRef;
+    typedef ComponentType*                  ComponentPtr;
+    typedef ComponentType&                  ComponentRef;
     
-    typedef TAccessor AccessorType;
-    typedef TNavigator NavigatorType;
-    typedef TChild ChildType;
+    typedef TAccessor                       AccessorType;
+    typedef TNavigator                      NavigatorType;
+    typedef TChild                          ChildType;
     
     typedef DeepIterator<
         ContainerType,
@@ -113,8 +134,10 @@ public:
     /**
      * @brief This is the constructor to create a useable view.
      * @param container The container over which you like to iterate
-     * @param accessor Define the way how we access the data within the container
-     * @param navigator define the way how the iterator goes through the container
+     * @param accessor Define the way how we access the data within the 
+     * container
+     * @param navigator define the way how the iterator goes through the 
+     * container
      * @param child other iterator to handle nested datastructures
      */
     template<
@@ -136,21 +159,29 @@ public:
         static_assert(std::is_same<
             typename std::decay<TAccessor_>::type,
             typename std::decay<TAccessor>::type>::value,
-            "The type of the accessor given by the template and the accessor given as parameter are not the same");
+            "The type of the accessor given by the template and the accessor \
+            given as parameter are not the same");
         static_assert(std::is_same<
             typename std::decay<TNavigator_>::type,
             typename std::decay<TNavigator>::type>::value,
-            "The type of the accessor given by the template and the accessor given as parameter are not the same");
+            "The type of the accessor given by the template and the accessor \
+            given as parameter are not the same");
     }
 
     /**
-    * @brief This function creates an iterator, which is at the after-last-element
+    * @brief This function creates an iterator, which is at the 
+    * after-last-element
     */
     HDINLINE
     IteratorType
     end()
     {
-        return IteratorType(containerPtr, accessor, navigator, child, details::constructorType::end());
+        return IteratorType(
+            containerPtr, 
+            accessor, 
+            navigator, 
+            child, 
+            details::constructorType::end());
     }
     
     /**
@@ -161,18 +192,29 @@ public:
     typename std::enable_if<T == true, IteratorType>::type
     rbegin()
     {
-        return IteratorType(containerPtr, accessor, navigator, child, details::constructorType::rbegin());
+        return IteratorType(
+            containerPtr, 
+            accessor, 
+            navigator, 
+            child, 
+            details::constructorType::rbegin());
     }
     
-        /**
-    * @brief This function creates an iterator, which is at the before-first-element
+    /**
+    * @brief This function creates an iterator, which is at the 
+    * before-first-element
     */
     template<bool T = isBidirectional>
     HDINLINE
     typename std::enable_if<T == true, IteratorType>::type
     rend()
     {
-        return IteratorType(containerPtr, accessor, navigator, child, details::constructorType::rend());
+        return IteratorType(
+            containerPtr, 
+            accessor, 
+            navigator, 
+            child, 
+            details::constructorType::rend());
     }
     
     /**
@@ -182,7 +224,12 @@ public:
     IteratorType
     begin()
     {
-        return IteratorType(containerPtr, accessor, navigator, child, details::constructorType::begin());
+        return IteratorType(
+            containerPtr,
+            accessor, 
+            navigator, 
+            child, 
+            details::constructorType::begin());
     }
 
 
@@ -204,13 +251,21 @@ template<
     typename TContainer,
     typename TPrescription,
     typename TContainerNoRef = typename std::decay<TContainer>::type,
-    typename ComponentType = typename traits::ComponentType<TContainerNoRef>::type,
-    typename IndexType = typename pmacc::traits::IndexType<TContainerNoRef>::type,
-    typename ContainerCategoryType = typename traits::ContainerCategory<TContainerNoRef>::type,
+    typename ComponentType = typename traits::ComponentType<
+        TContainerNoRef>::type,
+    typename IndexType = typename pmacc::traits::IndexType<
+        TContainerNoRef>::type,
+    typename ContainerCategoryType = typename traits::ContainerCategory<
+        TContainerNoRef>::type,
 
-    bool hasConstantSize = traits::HasConstantSize<TContainerNoRef>::value,
-    bool isBidirectional = traits::IsBidirectional<TContainerNoRef, ContainerCategoryType>::value,
-    bool isRandomAccessable = pmacc::traits::IsRandomAccessable<TContainerNoRef, ContainerCategoryType>::value>
+    bool hasConstantSize = traits::HasConstantSize<
+        TContainerNoRef>::value,
+    bool isBidirectional = traits::IsBidirectional<
+        TContainerNoRef, 
+        ContainerCategoryType>::value,
+    bool isRandomAccessable = pmacc::traits::IsRandomAccessable<
+        TContainerNoRef, 
+        ContainerCategoryType>::value>
 auto 
 HDINLINE
 makeView(
@@ -220,9 +275,12 @@ makeView(
     View<
         TContainerNoRef,
         ComponentType,
-        decltype(details::makeAccessor<TContainerNoRef>(pmacc::iterator::forward<TPrescription>(concept).accessor)),
-        decltype(details::makeNavigator<TContainerNoRef>(pmacc::iterator::forward<TPrescription>(concept).navigator)),
-        decltype(details::makeIterator<ComponentType>(pmacc::iterator::forward<TPrescription>(concept).child)),
+        decltype(details::makeAccessor<TContainerNoRef>(
+                pmacc::iterator::forward<TPrescription>(concept).accessor)),
+        decltype(details::makeNavigator<TContainerNoRef>(
+            pmacc::iterator::forward<TPrescription>(concept).navigator)),
+        decltype(details::makeIterator<ComponentType>(
+            pmacc::iterator::forward<TPrescription>(concept).child)),
         IndexType,
         hasConstantSize,
         isBidirectional,
@@ -230,11 +288,18 @@ makeView(
 {
 
         
-        typedef TContainerNoRef                          ContainerType;
+        typedef TContainerNoRef                                 ContainerType;
 
-        typedef decltype(details::makeAccessor<ContainerType>( pmacc::iterator::forward<TPrescription>(concept).accessor)) AccessorType;
-        typedef decltype(details::makeNavigator<ContainerType>( pmacc::iterator::forward<TPrescription>(concept).navigator)) NavigatorType;
-        typedef decltype(details::makeIterator<ComponentType>(pmacc::iterator::forward<TPrescription>(concept).child)) ChildType;
+        typedef decltype(details::makeAccessor<ContainerType>( 
+            pmacc::iterator::forward<TPrescription>(
+                concept).accessor))                             AccessorType;
+        typedef decltype(details::makeNavigator<ContainerType>( 
+            pmacc::iterator::forward<TPrescription>(
+                concept).navigator))                            NavigatorType;
+        typedef decltype(details::makeIterator<ComponentType>(
+            pmacc::iterator::forward<TPrescription>(
+                concept).child))                                ChildType;
+                
         typedef View<
             ContainerType,
             ComponentType,
@@ -247,10 +312,12 @@ makeView(
             isRandomAccessable> ResultType;
      
 
-        auto && accessor = details::makeAccessor<ContainerType>(concept.accessor);
-        
-        auto && navigator = details::makeNavigator<ContainerType>(concept.navigator);
-        auto && child = details::makeIterator<ComponentType>(concept.child);
+        auto && accessor = details::makeAccessor<ContainerType>(
+            concept.accessor);
+        auto && navigator = details::makeNavigator<ContainerType>(
+            concept.navigator);
+        auto && child = details::makeIterator<ComponentType>(
+            concept.child);
         
 
         

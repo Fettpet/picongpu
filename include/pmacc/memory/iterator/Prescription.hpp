@@ -1,19 +1,41 @@
+/* Copyright 2013-2018 Sebastian Hahn
+ *
+ * This file is part of PMacc.
+ *
+ * PMacc is free software: you can redistribute it and/or modify
+ * it under the terms of either the GNU General Public License or
+ * the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PMacc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with PMacc.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 #include "pmacc/forward.hpp"
 #include "pmacc/memory/iterator/Navigator.hpp"
-/**
- * @author Sebastian Hahn t.hahn <at> pmacc.de
- * @brief A concept consists of an accessor, a navigator and a child. A concept
- * decribes an abstract way to iterate through the data. The navigator and the 
- * accessor are not bound to a container.
- * 
- */
 
 namespace pmacc 
 {
 
 namespace details 
 {
+    /**
+ * @brief A prescription consists of an accessor, a navigator and optional a 
+ * child. A prescription decribes an abstract way to iterate through the data. 
+ * The navigator and the accessor are not bound to a container. A prescription 
+ * can be created with the makeIteratorPrescription function. 
+ * 
+ */
+
 template<
     typename TAccessor,
     typename TNavigator,

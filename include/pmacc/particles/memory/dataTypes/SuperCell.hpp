@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 Heiko Burau, Rene Widera
+/* Copyright 2013-2018 Heiko Burau, Rene Widera, Sebastian Hahn
  *
  * This file is part of PMacc.
  *
@@ -94,9 +94,10 @@ public:
 
 namespace traits 
 {
-/**
-@brief number of elements within a frame
-@todo Here we need to specify the number of particles in frames
+/** 
+@brief number of frames within a supercell. At the moment, the supercell hasnt a
+varible, where the number of frames is stored. So we start at the first and 
+count.
 */
 template<
 typename T>

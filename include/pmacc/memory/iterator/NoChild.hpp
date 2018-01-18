@@ -1,4 +1,4 @@
-/* Copyright 2018 Sebastian Hahn
+/* Copyright 2013-2018 Sebastian Hahn
  *
  * This file is part of PMacc.
  *
@@ -19,27 +19,24 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #pragma once
-
+#include "pmacc/types.hpp"
 namespace pmacc 
 {
-namespace traits 
-{
-/**
- * \struct ComponentType
- * @brief The ComponentType trait gives information about the type of the 
- * components of a container. You need to implement a specialication such that,
- * <b> typedef ComponentType< ContainerType >::type YourComponentType;</b>
- * is a valid and correct statement.
- * 
- */
-template<typename T>
-struct ComponentType
-{
-    static_assert(true, "ComponentType wasnt specilized");
-};
 
-}//traits
-}//pmacc
+/**
+ * @brief The NoChild is used to define the last layer in a nested Iterator
+ */
+struct NoChild {
+    HDINLINE
+    bool 
+    debug_Test()
+    {
+        return true;
+    }
+    
+    const bool test = true;
+} ;
+    
+}
+

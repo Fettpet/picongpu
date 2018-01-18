@@ -1,7 +1,63 @@
+/* Copyright 2013-2018 Sebastian Hahn
+ *
+ * This file is part of PMacc.
+ *
+ * PMacc is free software: you can redistribute it and/or modify
+ * it under the terms of either the GNU General Public License or
+ * the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PMacc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with PMacc.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+#pragma once
+
+#include <iostream>
+
+#include "pmacc/traits/iterator/Componenttype.hpp"
+#include "pmacc/types.hpp"
+
+#include "pmacc/traits/iterator/NumberElements.hpp"
+#include "pmacc/traits/iterator/IndexType.hpp"
+#include "pmacc/traits/iterator/accessor/Ahead.hpp"
+#include "pmacc/traits/iterator/accessor/Behind.hpp"
+#include "pmacc/traits/iterator/accessor/Equal.hpp"
+#include "pmacc/traits/iterator/accessor/Get.hpp"
+
+#include "pmacc/forward.hpp"
+
+namespace pmacc
+{
+namespace details
+{
+template <typename T>
+class UndefinedAhead
+{
+    typedef char one;
+    typedef long two;
+
+    template <typename C> static one test( decltype(&C::UNDEFINED) ) ;
+    template <typename C> static two test(...);    
+
+public:
+    enum { value = sizeof(test<T>(0)) == sizeof(char) };
+}; // class UndefinedAhead
+} // namespace details
+     
+     
+
 /**
  * \struct Accessor
- * 
- * @author Sebastian Hahn (t.hahn[at]pmacc.de) 
  * 
  * @brief The Accesor is used to describe the current position of the iterator. 
  * The Accessor use several functions: 
@@ -34,37 +90,6 @@
  * @tparam isRandomAccessable true, if the container is random accessable, false
  * otherwise
  */
-
-#pragma once
-#include <iostream>
-#include "pmacc/traits/iterator/Componenttype.hpp"
-#include "pmacc/types.hpp"
-#include "pmacc/traits/iterator/NumberElements.hpp"
-#include "pmacc/traits/iterator/IndexType.hpp"
-#include "pmacc/traits/iterator/accessor/Ahead.hpp"
-#include "pmacc/traits/iterator/accessor/Behind.hpp"
-#include "pmacc/traits/iterator/accessor/Equal.hpp"
-#include "pmacc/traits/iterator/accessor/Get.hpp"
-#include "pmacc/forward.hpp"
-
-namespace pmacc
-{
-namespace details
-{
-template <typename T>
-class UndefinedAhead
-{
-    typedef char one;
-    typedef long two;
-
-    template <typename C> static one test( decltype(&C::UNDEFINED) ) ;
-    template <typename C> static two test(...);    
-
-public:
-    enum { value = sizeof(test<T>(0)) == sizeof(char) };
-}; // class UndefinedAhead
-} // namespace details
-     
 template<
     typename TContainer,
     typename TComponent,

@@ -1,3 +1,24 @@
+/* Copyright 2013-2018 Sebastian Hahn
+ *
+ * This file is part of PMacc.
+ *
+ * PMacc is free software: you can redistribute it and/or modify
+ * it under the terms of either the GNU General Public License or
+ * the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PMacc is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with PMacc.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #pragma once
 #include "pmacc/traits/iterator/IsBidirectional.hpp"
 #include "pmacc/traits/iterator/IsRandomAccessable.hpp"
@@ -18,7 +39,16 @@ namespace container
 {
 namespace categorie
 {
-
+/**
+ * A container is doubly link list like if the following conditions hold
+ * 1. The container has two public variables: first, and last. The variables 
+ * first and last are pointers of the index type.
+ * 2. The index type has two public variables: next, previous. Both are pointers
+ * of other index types. 
+ * 3. con->first->previous == nullptr
+ * 4. con->last->next == nullptr
+ * It is possible, that more conditions exists.
+ */
 struct DoublyLinkListLike;
 
 
@@ -35,7 +65,7 @@ struct IsBidirectional<
     pmacc::container::categorie::DoublyLinkListLike>
 {
     static const bool value = true;
-bool debugging = false;} ;       
+} ;       
 
 template<typename TContainer>
 struct IsRandomAccessable<
@@ -43,7 +73,7 @@ struct IsRandomAccessable<
     pmacc::container::categorie::DoublyLinkListLike>
 {
     static const bool value = true;
-bool debugging = false;} ;   
+} ;   
 
 namespace accessor
 {
@@ -69,7 +99,7 @@ struct Get<
         return *idx;
     }
     
-bool debugging = false;} ;       
+} ;       
 
 /**
  * @brief check if both iterators are at the same element. \see Equal.hpp
@@ -91,7 +121,7 @@ struct Equal<
     {
         return con1 == con2 && idx1 == idx2;
     }
-bool debugging = false;} ;   
+} ;   
 
  /**
  * @brief Check if the iterator one is ahead the second one. \see Ahead.hpp
@@ -122,7 +152,7 @@ struct Ahead<
         }
         return false;
     }
-bool debugging = false;} ;   
+} ;   
 
 
 
@@ -153,7 +183,7 @@ struct Behind<
         }
         return false;
     }
-bool debugging = false;} ;   
+} ;   
 
 } // namespace accessor
     
@@ -179,7 +209,7 @@ struct FirstElement<
         idx = container->first;
 
     }
-bool debugging = false;} ;   
+} ;   
 /**
  * @brief Implementation to get the next element. For futher details \see 
  * NExtElement.hpp
@@ -213,7 +243,7 @@ struct NextElement<
         }
         return range - i;
     }
-bool debugging = false;} ;   
+} ;   
 /**
  * @brief Implementation to check whether the iterator is after the last element.
  * \see AfterLastElement.hpp
@@ -243,7 +273,7 @@ struct AfterLastElement<
     {
         idx = nullptr;
     }
-bool debugging = false;} ;   
+} ;   
 
 /**
  * @brief Set the iterator to the last element. \see LastElement.hpp
@@ -267,7 +297,7 @@ struct LastElement<
         index = containerPtr->last;
 
     }
-bool debugging = false;} ;   
+} ;   
 
 /**
  * @brief Implementation to get the next element. For futher details \see 
@@ -296,13 +326,13 @@ struct PreviousElement<
         TRange i = 0;
         for(i = 0; i<range; ++i)
         {
-            idx = idx->PreviousElement;
+            idx = idx->previous;
             if(idx == nullptr)
                 break;
         }
         return range - i;
     }
-bool debugging = false;} ;   
+} ;   
 
 /**
  * @brief Implementation to check whether the iterator is before the fist 
@@ -342,7 +372,7 @@ struct BeforeFirstElement<
     {
         idx = nullptr;
     }
-bool debugging = false;} ;   
+} ;   
 }
     
 } // namespace traits
