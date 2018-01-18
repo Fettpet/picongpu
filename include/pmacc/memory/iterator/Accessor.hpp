@@ -43,8 +43,8 @@ namespace details
 template <typename T>
 class UndefinedAhead
 {
-    typedef char one;
-    typedef long two;
+    using one = char;
+    using two = long ;
 
     template <typename C> static one test( decltype(&C::UNDEFINED) );
     template <typename C> static two test(...);    
@@ -126,13 +126,13 @@ template<
     bool isRandomAccessable = not details::UndefinedAhead<T_Ahead>::value >
 struct Accessor
 {
-    typedef T_Container                                     ContainerType;
-    typedef ContainerType*                                  ContainerPtr;
-    typedef T_Component                                     ComponentType;
-    typedef ComponentType*                                  ComponentPtr;
-    typedef ComponentType&                                  ComponentRef;
-    typedef T_ContainerCategory                             ContainerCategory;
-    typedef T_Index                                         IndexType;
+    using ContainerType = T_Container;
+    using ContainerPtr = ContainerType*;
+    using ComponentType = T_Component;
+    using ComponentPtr = ComponentType*;
+    using ComponentRef = ComponentType&;
+    using ContainerCategory = T_ContainerCategory;
+    using IndexType = T_Index;
     
     HDINLINE Accessor() = default;
     
@@ -276,7 +276,6 @@ struct Accessor<
     pmacc::details::UndefinedType
 >
 {
-    typedef details::UndefinedType ContainerType;
     
     HDINLINE Accessor() = default;
     HDINLINE Accessor(
@@ -352,11 +351,12 @@ makeAccessor(
     T_Equal,
     T_Behind>
 {
-    typedef pmacc::Accessor<
+    using AccessorType = pmacc::Accessor<
         T_ContainerNoRef,
         T_Component,
         T_Index,
-        T_ContainerCategory> AccessorType;
+        T_ContainerCategory
+    > ;
     auto && accessor = AccessorType();
     return accessor;
 }
@@ -418,7 +418,7 @@ makeAccessor()
     T_Equal,
     T_Behind>
 {
-    typedef pmacc::Accessor<
+    using ResultType =  pmacc::Accessor<
         T_ContainerNoRef,
         T_Component,
         T_Index,
@@ -426,7 +426,8 @@ makeAccessor()
         T_Get,
         T_Ahead,
         T_Equal,
-        T_Behind>                                          ResultType;
+        T_Behind
+    >                                          ;
         
     return ResultType();
 }
@@ -493,7 +494,7 @@ makeAccessor(
     T_Equal,
     T_Behind>
 {
-    typedef pmacc::Accessor<
+    using ResultType = pmacc::Accessor<
         T_ContainerNoRef,
         T_Component,
         T_Index,
@@ -501,7 +502,8 @@ makeAccessor(
         T_Get,
         T_Ahead,
         T_Equal,
-        T_Behind>                                         ResultType;
+        T_Behind
+    >;
         
     return ResultType();
 }
@@ -527,7 +529,7 @@ makeAccessor()
     pmacc::details::UndefinedType,
     pmacc::details::UndefinedType>
 {
-    typedef pmacc::Accessor<
+    using ResultType = pmacc::Accessor<
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
@@ -535,7 +537,8 @@ makeAccessor()
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
-        pmacc::details::UndefinedType>                           ResultType;
+        pmacc::details::UndefinedType
+    >;
     return ResultType();
 }
 
