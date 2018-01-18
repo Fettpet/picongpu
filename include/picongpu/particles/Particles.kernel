@@ -19,7 +19,7 @@
  */
 
 #pragma once
-
+#include <iostream>
 #include "picongpu/simulation_defines.hpp"
 #include <pmacc/particles/frame_types.hpp>
 #include <pmacc/particles/memory/boxes/ParticlesBox.hpp>
@@ -37,6 +37,7 @@
 #include <pmacc/nvidia/rng/RNG.hpp>
 #include <pmacc/nvidia/rng/methods/Xor.hpp>
 #include <pmacc/nvidia/rng/distributions/Normal_float.hpp>
+#include "pmacc/forward.hpp"
 
 #include <pmacc/particles/operations/Assign.hpp>
 #include <pmacc/particles/operations/Deselect.hpp>
@@ -48,6 +49,480 @@
 #include <pmacc/mappings/threads/IdxConfig.hpp>
 #include <pmacc/mappings/threads/WorkerCfg.hpp>
 
+
+
+#include <pmacc/traits/iterator/Componenttype.hpp>
+#include <pmacc/traits/iterator/IndexType.hpp>
+#include <pmacc/traits/iterator/IsBidirectional.hpp>
+#include <pmacc/traits/iterator/IsRandomAccessable.hpp>
+#include <pmacc/memory/iterator/IdentityValue.hpp>
+
+namespace picongpu
+{
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc>
+struct FrameWrapper
+{
+protected:
+    const TAcc & acc;
+    TParticleBox pb;
+    TMapper mapper;
+    DataSpace< simDim > const block;
+    
+public:
+    using FramePtr = typename TParticleBox::FramePtr;
+    template<
+        typename T_ACC,
+        typename T_ParticleBox,
+        typename T_Mapper>
+    HDINLINE
+    FrameWrapper(T_ACC && acc, T_ParticleBox && pb, T_Mapper && mapper):
+        acc(pmacc::forward<T_ACC>(acc)),
+        pb(pmacc::forward<T_ParticleBox>(pb)),
+        mapper(pmacc::forward<T_Mapper>(mapper)),
+        block(
+            mapper.getSuperCellIndex( 
+                DataSpace< simDim >( blockIdx ) 
+                ))
+    {}
+    
+    HDINLINE
+    FramePtr
+    first()
+    {
+        return pb.getFirstFrame(block);
+    }
+    
+    HDINLINE
+    FramePtr
+    last()
+    {
+        return pb.getLastFrame(block);
+    }
+    
+    HDINLINE
+    FramePtr
+    next(FramePtr ptr)
+    {
+        return pb.getNextFrame(ptr);
+    }
+    
+    HDINLINE
+    FramePtr 
+    previous(FramePtr ptr)
+    {
+        return pb.getPreviousFrame(ptr);
+    }
+    
+    HDINLINE
+    bool 
+    valid(FramePtr ptr)
+    {
+        return ptr.isValid();
+    }
+    
+
+}; // struct FrameWrapper
+
+} // namespace picongpu
+/**
+ * All needed traits are created to use the particlebox as container
+ */
+
+
+namespace pmacc
+{
+namespace traits
+{
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc>
+struct NumberElements<picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> >
+{
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> Container;
+    
+    HDINLINE
+    int_fast32_t 
+    operator()(Container* container)
+    const
+    {
+        auto result = 0;
+        auto tmp = container->first();
+        while(container->valid(tmp))
+        {
+            tmp = container->next(tmp);
+            ++result;
+        }
+        return result;
+    }
+    
+}; // NumberElements
+    
+/// @brief This is the trait for the componenttype of the particle box
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc>
+struct ComponentType<picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> >
+{
+    
+    typedef typename TParticleBox::FramePtr::type type;
+};
+
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc>
+struct IndexType<picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, void>
+{
+    typedef typename TParticleBox::FramePtr type; 
+};
+
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc,
+    typename TCategorie>
+struct IsBidirectional<picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, TCategorie>
+{
+    const static bool value = true;
+};
+
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc,
+    typename TCategorie>
+struct IsRandomAccessable<picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, TCategorie>
+{
+    const static bool value = false;
+};
+
+namespace navigator
+{
+/**
+ * @brief implementation to get the first element within a container. For further
+ * details \see FirstElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TIndex,
+    typename TAcc>
+struct FirstElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, 
+    TIndex, 
+    void>
+{
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    HDINLINE
+    void
+    operator() (TContainer* container, TIndex& idx)
+    {
+        idx = container->first();
+    }
+    
+} ;
+
+/**
+ * @brief Implementation to get the next element. For futher details \see 
+ * NExtElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TIndex,
+    typename TRange,
+    typename TAcc,
+    typename TContainerCategorie>
+struct NextElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+    TIndex,
+    TRange,
+    TContainerCategorie>
+{
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    template<
+        typename TContainerSize>
+    HDINLINE
+    TRange
+    operator() (
+        TContainer* container, 
+        TIndex& idx, 
+        TRange const & range,
+        TContainerSize&)
+    {
+        TRange i = static_cast<TRange>(0);
+        for(;i < range; ++i)
+        {
+            idx = container->next(idx);
+            if(not idx.isValid())
+                break;
+        }
+        return range - i;
+    }
+    
+} ;
+
+/**
+ * @brief Implementation to check whether the end is reached. For further 
+ * informations \see AfterLastElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TIndex,
+    typename TAcc,
+    typename TContainerCategorie>
+struct AfterLastElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, 
+    TIndex, 
+    TContainerCategorie>
+{
+    
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    template<typename TSizeFunction>
+    HDINLINE
+    bool
+    test (TContainer*, TIndex const & idx, TSizeFunction const &)
+    const
+    {
+        return not idx.isValid();
+    }
+    
+    template<typename TSizeFunction, typename TOffset_>
+    HDINLINE
+    void
+    set(TContainer*, TIndex & idx, TOffset_ &&, TSizeFunction const &)
+    const
+    {
+        idx.ptr = nullptr;
+    }
+    
+} ;
+
+/**
+ * @brief Implementation of the array like last element trait. For further details
+ * \see LastElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TIndex,
+    typename TContainerCategorie,
+    typename TAcc>
+struct LastElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+    TIndex,
+    TContainerCategorie>
+{
+    
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    template<typename TSizeFunction>
+    HDINLINE
+    void
+    operator() (TContainer* conPtr, 
+                TIndex& index, 
+                TSizeFunction& size)
+    {
+        index = conPtr->last();
+    }
+    
+} ;
+
+/**
+ * @brief The implementation to get the last element in a array like data
+ * structure. For futher details \see PreviousElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TRange,
+    typename TContainerCategorie,
+    typename TIndex,
+    typename TAcc>
+struct PreviousElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+    TIndex,
+    TRange,
+    TContainerCategorie>
+{
+    
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    template<typename TSizeFunction>
+    HDINLINE
+    int
+    operator() (
+        TContainer* container, 
+        TIndex& idx, 
+        TRange const &,
+        TRange const & jumpsize,
+        TSizeFunction const & size)
+    {
+        TRange i = static_cast<TRange>(0);
+        for(; i<jumpsize; ++i)
+        {
+            idx = container->previous(idx);
+            if(not idx.isValid())
+            {
+                return jumpsize - i;
+            }
+        }
+
+        return static_cast<TRange>(0);
+    }
+    
+} ;
+
+/**
+ * @brief Implmentation to get check whether the iterator is on the element 
+ * before the first one. \see BeforeFirstElement.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TIndex,
+    typename TOffset,
+    typename TContainerCategorie,
+    typename TAcc>
+struct BeforeFirstElement<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>, 
+    TIndex,
+    TOffset,
+    TContainerCategorie>
+{
+    
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    template<typename TSizeFunction, typename TOffset_>
+    HDINLINE
+    bool
+    test (TContainer*, TIndex const & idx, TOffset_ &&, TSizeFunction const &)
+    const
+    {
+        return not idx.isValid();
+    }
+    
+    template<typename TSizeFunction, typename TOffset_>
+    HDINLINE
+    void
+    set(TContainer*, TIndex & idx, TOffset_ &&, TSizeFunction const &)
+    const
+    {
+        idx.ptr = nullptr;
+    }
+}; // struct BeforeFirstElement
+    
+} // namespace navigator
+
+namespace accessor
+{
+
+/**
+ * @brief get the value of the element, at the iterator positions. \see Get.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc,
+    typename TComponent,
+    typename TContainerCategorie,
+    typename TIndex>
+struct Get<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+    TComponent, 
+    TIndex, 
+    TContainerCategorie
+    >
+{
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    
+    HDINLINE
+    TComponent&
+    operator() (TContainer*, TIndex& idx)
+    {
+        return *idx;
+    }
+};    
+
+/**
+ * @brief check if both iterators are at the same element. \see Equal.hpp
+ */
+template<
+    typename TParticleBox, 
+    typename TMapper,
+    typename TAcc,
+    typename TComponent,
+    typename TContainerCategorie,
+    typename TIndex>
+struct Equal<
+    picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+    TComponent, 
+    TIndex, 
+    TContainerCategorie
+    >
+{
+    typedef picongpu::FrameWrapper<TParticleBox, TMapper, TAcc> TContainer;
+    HDINLINE
+    bool
+    operator() (TContainer* con1, TIndex& idx1, TContainer* con2, TIndex& idx2)
+    {
+        return con1 == con2 && idx1 == idx2;
+    }
+};
+
+//  /**
+//  * @brief Check if the iterator one is ahead the second one. \see Ahead.hpp
+//  */
+// template<
+//     typename TParticleBox, 
+//     typename TMapper,
+//     typename TAcc,
+//     typename TComponent,
+//     typename TContainerCategorie;
+//     typename TIndex>
+// struct Ahead<
+//     picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+//     TComponent, 
+//     TIndex, 
+//     TContainerCategorie>
+// {
+// };
+// 
+// 
+// 
+// /**
+//  * @brief check wheter the iterator 1 is behind the second one. \see Behind.hpp
+//  */
+// template<
+//     typename TParticleBox, 
+//     typename TMapper,
+//     typename TAcc,
+//     typename TComponent,
+//     typename TIndex>
+// struct Behind<
+//     picongpu::FrameWrapper<TParticleBox, TMapper, TAcc>,
+//     TComponent, 
+//     TIndex, 
+//     void
+//     >
+// {
+// };
+
+} // namespace accessor
+
+} // namespace traits
+} // namespace pmacc
+
+#include <pmacc/memory/iterator/Prescription.hpp>
+#include <pmacc/memory/iterator/View.hpp>
 
 namespace picongpu
 {
@@ -423,6 +898,9 @@ struct KernelMoveAndMarkParticles
         T_Mapping mapper
     ) const
     {
+        
+        typedef picongpu::FrameWrapper<T_ParBox, T_Mapping, T_Acc> FrameWrapper;
+    
         using namespace mappings::threads;
 
         constexpr uint32_t frameSize = pmacc::math::CT::volume< SuperCellSize >::type::value;
@@ -443,7 +921,25 @@ struct KernelMoveAndMarkParticles
             frameSize,
             numWorkers
         >;
-
+        
+        //FrameWrapper(TAcc & const acc, TParticleBox const & pb, TMapper const & mapper):
+        // We go over all frames -> Within the particles is the parallization
+        typedef pmacc::IdentityValue<uint_fast32_t, 0> Offset;
+        typedef pmacc::IdentityValue<uint_fast32_t, 1> Jumpsize;
+        FrameWrapper frameWrapper(acc,  pb, mapper);
+        
+        auto && reception = pmacc::makeIteratorPrescription(
+            pmacc::makeAccessor(),
+            pmacc::makeNavigator(
+                Offset(),
+                Jumpsize()));
+        
+         auto && view = pmacc::makeView(
+             frameWrapper,
+             reception);
+            
+        auto && it = view.rbegin();
+        
         PMACC_SMEM(
             acc,
             mustShift,
@@ -451,7 +947,7 @@ struct KernelMoveAndMarkParticles
         );
 
         // current processed frame
-        FramePtr frame;
+//         FramePtr frame;
         lcellId_t particlesInSuperCell;
 
         ForEachIdx<
@@ -471,7 +967,7 @@ struct KernelMoveAndMarkParticles
             }
         );
 
-        frame = pb.getLastFrame( block );
+//         frame = pb.getLastFrame( block );
         particlesInSuperCell = pb.getSuperCell( block ).getSizeLastFrame( );
 
         auto cachedB = CachedBox::create<
@@ -492,9 +988,10 @@ struct KernelMoveAndMarkParticles
         __syncthreads();
 
         // end kernel if we have no frames
-        if( !frame.isValid( ) )
+        
+        if( it == view.rend() )
            return;
-
+// std::cout << std::boolalpha << (it.getIndex().ptr == nullptr) << " " << (it != view.rend()) << std::endl;
         nvidia::functors::Assign assign;
         ThreadCollective<
             T_DataDomain,
@@ -518,10 +1015,12 @@ struct KernelMoveAndMarkParticles
         );
 
         __syncthreads();
-
+        
         // move over frames and call frame solver
-        while( frame.isValid( ) )
+        for(;it != view.rend(); --it)
         {
+//             std::cout << counter << std::endl;
+//             ++counter;
             // loop over all particles in the frame
             ForEachIdx< ParticleDomCfg >{ workerIdx }
             (
@@ -534,7 +1033,7 @@ struct KernelMoveAndMarkParticles
                     {
                         particleFunctor(
                             acc,
-                            *frame,
+                            *it,
                             linearIdx,
                             cachedB,
                             cachedE,
@@ -545,7 +1044,7 @@ struct KernelMoveAndMarkParticles
                 }
             );
             // independent for each worker
-            frame = pb.getPreviousFrame( frame );
+//             frame = pb.getPreviousFrame( frame );
             particlesInSuperCell = frameSize;
         }
 

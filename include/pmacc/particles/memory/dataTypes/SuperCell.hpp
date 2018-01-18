@@ -22,7 +22,11 @@
 #pragma once
 
 #include "pmacc/types.hpp"
-
+#include "pmacc/traits/iterator/Componenttype.hpp"
+#include "pmacc/traits/iterator/HasConstantSize.hpp"
+#include "pmacc/traits/iterator/NumberElements.hpp"
+#include "pmacc/traits/iterator/ContainerCategory.hpp"
+#include "pmacc/memory/iterator/categorie/SupercellLike.hpp"
 namespace pmacc
 {
 
@@ -88,4 +92,54 @@ public:
     PMACC_ALIGN(lastFramePtr, TYPE*);
 };
 
-} //end namespace
+namespace traits 
+{
+/**
+@brief number of elements within a frame
+@todo Here we need to specify the number of particles in frames
+*/
+template<
+typename T>
+struct NumberElements<pmacc::SuperCell<T> >
+{
+    typedef pmacc::SuperCell<T> ContainerType;
+
+    uint_fast32_t
+    HDINLINE
+    operator()(ContainerType* container)
+    {
+        auto result = 0;
+        auto tmp = container->firstFramePtr;
+        while(tmp != nullptr)
+        {
+            tmp = tmp->previousFrame.ptr;
+            ++result;
+        }
+        return result;
+    }
+};
+
+template<
+typename T>
+struct HasConstantSize<pmacc::SuperCell<T> >
+{
+    const static bool value = false;
+};
+
+template<
+    typename T_Container>
+struct ContainerCategory<pmacc::SuperCell<T_Container> >
+{
+    typedef pmacc::traits::categorie::SupercellLike type;
+};
+
+template<
+typename T>
+struct ComponentType<pmacc::SuperCell<T> >
+{
+    typedef T type;
+};
+
+}//namespace traits
+
+} //end namespace pmacc
