@@ -28,7 +28,6 @@
 #include "pmacc/memory/iterator/Prescription.hpp"
 #include "pmacc/memory/iterator/Accessor.hpp"
 #include "pmacc/memory/iterator/Navigator.hpp"
-#include "pmacc/memory/iterator/Policies.hpp"
 #include "pmacc/traits/iterator/NumberElements.hpp"
 #include "pmacc/traits/iterator/Componenttype.hpp"
 #include "pmacc/types.hpp"

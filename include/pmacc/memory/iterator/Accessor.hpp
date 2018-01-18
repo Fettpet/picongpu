@@ -52,6 +52,8 @@ class UndefinedAhead
 public:
     enum { value = sizeof(test<T>(0)) == sizeof(char) };
 }; // class UndefinedAhead
+
+struct UndefinedType;
 } // namespace details
      
      

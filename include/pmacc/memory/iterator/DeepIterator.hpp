@@ -22,7 +22,7 @@
 #pragma once
 #include <sstream>
 #include "pmacc/memory/iterator/Prescription.hpp"
-#include "pmacc/memory/iterator/Policies.hpp"
+#include "pmacc/memory/iterator/NoChild.hpp"
 #include "pmacc/memory/iterator/Accessor.hpp"
 #include "pmacc/memory/iterator/Navigator.hpp"
 #include <limits>
@@ -673,8 +673,8 @@ public:
     template< 
         bool T = hasConstantSizeChild> 
     HDINLINE 
-     typename std::enable_if<T == true, uint>::type
-    gotoPrevious(uint const & jumpsize,)
+    typename std::enable_if<T == true, uint>::type
+    gotoPrevious(uint const & jumpsize)
     {
         /** 
          * For implementation details see gotoNext

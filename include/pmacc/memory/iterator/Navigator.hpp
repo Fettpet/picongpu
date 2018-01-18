@@ -21,8 +21,8 @@
 
 
 #pragma once
-#include "pmacc/forward.hpp"
-#include "pmacc/memory/iterator/Policies.hpp"
+#include "pmacc/forward.hpp" 
+#include "pmacc/memory/iterator/NoChild.hpp"
 #include <boost/core/ignore_unused.hpp>
 #include <type_traits>
 #include "pmacc/types.hpp"
@@ -42,6 +42,8 @@ namespace pmacc
 {
 namespace details
 {
+struct UndefinedType;
+
 template <typename T>
 class UndefinedLastElement
 {
