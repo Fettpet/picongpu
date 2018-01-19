@@ -71,35 +71,54 @@ namespace pmath = pmacc::math;
  * @tparam T_Flags sequence with identifiers to add flags on a frame
  *                 (e.g. useSolverXY, calcRadiation, ...)
  */
-template<typename T_CreatePairOperator,
-typename T_ParticleDescription >
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
 struct Frame;
 
-template<typename T_CreatePairOperator,
-typename T_ParticleDescription >
-struct Frame :
-public InheritLinearly<typename T_ParticleDescription::MethodsList>,
-protected pmath::MapTuple<typename SeqToMap<typename T_ParticleDescription::ValueTypeSeq, T_CreatePairOperator>::type, pmath::AlignedData>,
-public InheritLinearly<
-    typename OperateOnSeq<
-        typename T_ParticleDescription::FrameExtensionList,
-        bmpl::apply1<bmpl::_1, Frame<T_CreatePairOperator,T_ParticleDescription> >
-    >::type
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
 >
+struct Frame :
+    public InheritLinearly<typename T_ParticleDescription::MethodsList>,
+    protected pmath::MapTuple<typename SeqToMap<
+        typename T_ParticleDescription::ValueTypeSeq,
+        T_CreatePairOperator>::type, pmath::AlignedData
+    >,
+    public InheritLinearly<
+        typename OperateOnSeq<
+            typename T_ParticleDescription::FrameExtensionList,
+            bmpl::apply1<
+                bmpl::_1,
+                Frame<T_CreatePairOperator,T_ParticleDescription>
+            >
+        >::type
+    >
 {
-    typedef T_ParticleDescription ParticleDescription;
-    typedef typename ParticleDescription::Name Name;
-    typedef typename ParticleDescription::SuperCellSize SuperCellSize;
-    typedef typename ParticleDescription::ValueTypeSeq ValueTypeSeq;
-    typedef typename ParticleDescription::MethodsList MethodsList;
-    typedef typename ParticleDescription::FlagsList FlagList;
-    typedef typename ParticleDescription::FrameExtensionList FrameExtensionList;
-    typedef Frame<T_CreatePairOperator, ParticleDescription> ThisType;
+    using ParticleDescription =  T_ParticleDescription ;
+    using Name = typename ParticleDescription::Name;
+    using SuperCellSize = typename ParticleDescription::SuperCellSize ;
+    using ValueTypeSeq = typename ParticleDescription::ValueTypeSeq ;
+    using MethodsList = typename ParticleDescription::MethodsList ;
+    using FlagList = typename ParticleDescription::FlagsList ;
+    using FrameExtensionList = typename ParticleDescription::FrameExtensionList ;
+    using ThisType = Frame<
+        T_CreatePairOperator,
+        ParticleDescription
+    > ;
     /* definition of the MapTupel where we inherit from*/
-    typedef pmath::MapTuple<typename SeqToMap<ValueTypeSeq, T_CreatePairOperator>::type, pmath::AlignedData> BaseType;
+    using BaseType = pmath::MapTuple<
+        typename SeqToMap<
+            ValueTypeSeq,
+            T_CreatePairOperator
+        >::type,
+        pmath::AlignedData
+    >;
 
     /* type of a single particle*/
-    typedef pmacc::Particle<ThisType> ParticleType;
+    using ParticleType = pmacc::Particle<ThisType>;
 
     /* define boost result_of results
      * normaly result_of defines operator() result, in this case we define the result for
@@ -108,29 +127,49 @@ public InheritLinearly<
     template<class> struct result;
 
     /* const operator[]*/
-    template<class F, class TKey>
-    struct result<const F(TKey)>
+    template<
+        typename F,
+        typename T_Key>
+    struct result<const F(T_Key)>
     {
-        typedef typename GetKeyFromAlias<ValueTypeSeq, TKey, errorHandlerPolicies::ThrowValueNotFound>::type Key;
-        typedef typename boost::result_of<const BaseType(Key)>::type type;
+
+        using Key = typename GetKeyFromAlias<
+            ValueTypeSeq,
+            T_Key,
+            errorHandlerPolicies::ThrowValueNotFound
+        >::type ;
+        using type = typename boost::result_of<const BaseType(Key)>::type ;
     };
 
     /* non const operator[]*/
-    template<class F, class TKey>
-    struct result< F(TKey)>
+    template<
+        typename F,
+        typename T_Key>
+    struct result< F(T_Key)>
     {
-        typedef typename GetKeyFromAlias<ValueTypeSeq, TKey, errorHandlerPolicies::ThrowValueNotFound>::type Key;
-        typedef typename boost::result_of< BaseType(Key)>::type type;
+        using Key = typename GetKeyFromAlias<
+            ValueTypeSeq,
+            T_Key,
+            errorHandlerPolicies::ThrowValueNotFound
+        >::type;
+        using type = typename boost::result_of< BaseType(Key)>::type;
     };
 
     /** access the Nth particle*/
-    HDINLINE ParticleType operator[](const uint32_t idx)
+    HDINLINE
+    auto
+    operator[](const uint32_t idx)
+    -> ParticleType
     {
         return ParticleType(*this, idx);
     }
 
     /** access the Nth particle*/
-    HDINLINE const ParticleType operator[](const uint32_t idx) const
+    HDINLINE
+    auto
+    operator[](const uint32_t idx)
+    const
+    -> const ParticleType
     {
         return ParticleType(*this, idx);
     }
@@ -143,24 +182,38 @@ public InheritLinearly<
      */
     template<typename T_Key >
     HDINLINE
-    typename boost::result_of < ThisType(T_Key)>::type
+    auto
     getIdentifier(const T_Key)
+    -> typename boost::result_of < ThisType(T_Key)>::type
     {
-        typedef typename GetKeyFromAlias<ValueTypeSeq, T_Key>::type Key;
+        using Key = typename GetKeyFromAlias<
+            ValueTypeSeq,
+            T_Key
+        >::type;
         return BaseType::operator[](Key());
     }
 
     /** const version of method getIdentifier(const T_Key) */
     template<typename T_Key >
     HDINLINE
-    typename boost::result_of < const ThisType(T_Key)>::type
-    getIdentifier(const T_Key) const
+    auto
+    getIdentifier(const T_Key)
+    const
+    -> typename boost::result_of < const ThisType(T_Key)>::type
     {
-        typedef typename GetKeyFromAlias<ValueTypeSeq, T_Key>::type Key;
+        using Key = typename GetKeyFromAlias<
+            ValueTypeSeq,
+            T_Key
+        >::type;
+
         return BaseType::operator[](Key());
     }
 
-    HINLINE static std::string getName()
+    HINLINE
+    static auto
+    getName()
+    ->
+    std::string
     {
         return std::string(boost::mpl::c_str<Name>::value);
     }
@@ -175,95 +228,152 @@ namespace traits
 @todo Here we need to specify the number of particles in frames
 */
 template<
-typename T_CreatePairOperator,
-typename T_ParticleDescription>
-struct NumberElements<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct NumberElements<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
 {
-    typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> ContainerType;
+    using ContainerType = pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription
+    >;
 
-    uint_fast32_t
+
     HDINLINE
+    auto
     operator()(ContainerType*)
+    -> uint_fast32_t
     {
         return 256;
     }
 };
 
 template<
-typename T_CreatePairOperator,
-typename T_ParticleDescription>
-struct HasConstantSize<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct HasConstantSize<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
 {
     const static bool value = true;
 };
 
 template<
-typename T_CreatePairOperator,
-typename T_ParticleDescription>
-struct ContainerCategory<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct ContainerCategory<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
 {
     typedef pmacc::container::categorie::ArrayLike type;
 };
 
 template<
-typename T_CreatePairOperator,
-typename T_ParticleDescription>
-struct ComponentType<pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> >
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct ComponentType<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
 {
-typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> T_Frame;
-    typedef typename T_Frame::ParticleType type;
+    using FrameType =pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>;
+    using type = typename FrameType::ParticleType;
 };
 
-template<typename T_IdentifierName,
-typename T_CreatePairOperator,
-typename T_ParticleDescription
+template<
+    typename T_IdentifierName,
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
 >
 struct HasIdentifier<
-pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>,
-T_IdentifierName
+    pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription
+    >,
+    T_IdentifierName
 >
 {
 private:
-    typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> FrameType;
+    using FrameType = pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription>;
 public:
-    typedef typename FrameType::ValueTypeSeq ValueTypeSeq;
+    using ValueTypeSeq = typename FrameType::ValueTypeSeq ;
     /* if T_IdentifierName is void_ than we have no T_IdentifierName in our Sequence.
      * check is also valid if T_Key is a alias
      */
-    typedef typename GetKeyFromAlias<ValueTypeSeq, T_IdentifierName>::type SolvedAliasName;
+    using SolvedAliasName = typename GetKeyFromAlias<
+        ValueTypeSeq,
+        T_IdentifierName
+    >::type;
 
-    typedef bmpl::contains<ValueTypeSeq, SolvedAliasName> type;
+    using type = bmpl::contains<
+        ValueTypeSeq,
+        SolvedAliasName
+    >;
 };
 
-template<typename T_IdentifierName,
-typename T_CreatePairOperator,
-typename T_ParticleDescription
+template<
+    typename T_IdentifierName,
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
 >
 struct HasFlag<
-pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>, T_IdentifierName>
+    pmacc::Frame<
+         T_CreatePairOperator,
+         T_ParticleDescription
+    >,
+    T_IdentifierName
+>
 {
 private:
-    typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> FrameType;
-    typedef typename GetFlagType<FrameType, T_IdentifierName>::type SolvedAliasName;
-    typedef typename FrameType::FlagList FlagList;
+    using FrameType = pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription
+    >;
+    using SolvedAliasName =typename GetFlagType<
+        FrameType,
+        T_IdentifierName
+    >::type;
+    using FlagList = typename FrameType::FlagList;
 public:
 
-    typedef bmpl::contains<FlagList, SolvedAliasName> type;
+    using type =  bmpl::contains<
+        FlagList,
+        SolvedAliasName
+    > ;
 };
 
-template<typename T_IdentifierName,
-typename T_CreatePairOperator,
-typename T_ParticleDescription
+template<
+    typename T_IdentifierName,
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
 >
 struct GetFlagType<
-pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>, T_IdentifierName>
+    pmacc::Frame<
+         T_CreatePairOperator,
+         T_ParticleDescription
+    >,
+    T_IdentifierName
+>
 {
 private:
-    typedef pmacc::Frame<T_CreatePairOperator, T_ParticleDescription> FrameType;
-    typedef typename FrameType::FlagList FlagList;
+    using FrameType =  pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription
+    >;
+    using FlagList =  typename FrameType::FlagList;
 public:
 
-    typedef typename GetKeyFromAlias<FlagList, T_IdentifierName>::type type;
+    using type = typename GetKeyFromAlias<FlagList, T_IdentifierName>::type;
 };
 
 } //namespace traits
