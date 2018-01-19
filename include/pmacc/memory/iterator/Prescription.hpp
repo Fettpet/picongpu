@@ -37,14 +37,14 @@ namespace details
  */
 
 template<
-    typename TAccessor,
-    typename TNavigator,
-    typename TChild>
+    typename T_Accessor,
+    typename T_Navigator,
+    typename T_Child>
 struct IteratorPrescription
 {
-    typedef TNavigator NavigatorType;
-    typedef TAccessor AccessorType;
-    typedef TChild ChildType;
+    typedef T_Navigator NavigatorType;
+    typedef T_Accessor AccessorType;
+    typedef T_Child ChildType;
     
     HDINLINE 
     IteratorPrescription() = delete;
@@ -56,42 +56,41 @@ struct IteratorPrescription
     IteratorPrescription(IteratorPrescription &&) = default;
     
     template<
-        typename TNavigator_,
-        typename TAccessor_>
+        typename T_Navigator_,
+        typename T_Accessor_>
     HDINLINE
-    IteratorPrescription(TAccessor_ && acc,
-                    TNavigator_ && navi):
+    IteratorPrescription(T_Accessor_ && acc,
+                    T_Navigator_ && navi):
         child(pmacc::NoChild()),
-        navigator(pmacc::iterator::forward<TNavigator_>(navi)),
-        accessor(pmacc::iterator::forward<TAccessor_>(acc))
+        navigator(pmacc::iterator::forward<T_Navigator_>(navi)),
+        accessor(pmacc::iterator::forward<T_Accessor_>(acc))
     {}
     
     template<
-        typename TNavigator_,
-        typename TAccessor_,
-        typename TChild_>
+        typename T_Navigator_,
+        typename T_Accessor_,
+        typename T_Child_>
     HDINLINE
-    IteratorPrescription(TAccessor_ && acc,
-                    TNavigator_ && navi,
-                    TChild_ && child
+    IteratorPrescription(T_Accessor_ && acc,
+                    T_Navigator_ && navi,
+                    T_Child_ && child
                    ):
-        child(pmacc::iterator::forward<TChild_>(child)),
-        navigator(pmacc::iterator::forward<TNavigator_>(navi)),
-        accessor(pmacc::iterator::forward<TAccessor_>(acc))
+        child(pmacc::iterator::forward<T_Child_>(child)),
+        navigator(pmacc::iterator::forward<T_Navigator_>(navi)),
+        accessor(pmacc::iterator::forward<T_Accessor_>(acc))
     {}
     
     ChildType child;
     NavigatorType navigator;
     AccessorType accessor;
-    const bool valgrind_debug = true;
 } ;
 
-template<typename Prescription>
+template<typename T_Prescription>
 struct PrescriptionTypes
 {
-    typedef typename Prescription::AccessorType AccessorType;
-    typedef typename Prescription::NavigatorType NavigatorType;
-    typedef typename Prescription::AccessorType ChildType;
+    typedef typename T_Prescription::AccessorType AccessorType;
+    typedef typename T_Prescription::NavigatorType NavigatorType;
+    typedef typename T_Prescription::AccessorType ChildType;
 };
 
 } // namespace details
@@ -104,26 +103,26 @@ struct PrescriptionTypes
  * @return An iterator concept
  */
 template<
-    typename TAccessor,
-    typename TNavigator>
+    typename T_Accessor,
+    typename T_Navigator>
 HDINLINE
 auto
-makeIteratorPrescription(TAccessor&& accessor,
-             TNavigator&& navigator)
+makeIteratorPrescription(T_Accessor&& accessor,
+             T_Navigator&& navigator)
 -> pmacc::details::IteratorPrescription<
-    typename std::decay<TAccessor>::type,
-    typename std::decay<TNavigator>::type,
+    typename std::decay<T_Accessor>::type,
+    typename std::decay<T_Navigator>::type,
     pmacc::NoChild>
 {
     
     typedef pmacc::details::IteratorPrescription< 
-        typename std::decay<TAccessor>::type,
-        typename std::decay<TNavigator>::type,
+        typename std::decay<T_Accessor>::type,
+        typename std::decay<T_Navigator>::type,
         pmacc::NoChild> Iterator;
     
     return Iterator(
-        pmacc::iterator::forward<TAccessor>(accessor), 
-        pmacc::iterator::forward<TNavigator>(navigator));
+        pmacc::iterator::forward<T_Accessor>(accessor), 
+        pmacc::iterator::forward<T_Navigator>(navigator));
 }
   
 /**
@@ -133,40 +132,40 @@ makeIteratorPrescription(TAccessor&& accessor,
  * @return An iterator concept
  */
 template<
-    typename TAccessor,
-    typename TNavigator,
-    typename TChild>
+    typename T_Accessor,
+    typename T_Navigator,
+    typename T_Child>
 HDINLINE
 auto
-makeIteratorPrescription(TAccessor && accessor,
-             TNavigator && navigator,
-             TChild && child
+makeIteratorPrescription(T_Accessor && accessor,
+             T_Navigator && navigator,
+             T_Child && child
             )
 -> pmacc::details::IteratorPrescription<
-    typename std::decay<TAccessor>::type,
-    typename std::decay<TNavigator>::type,
-    typename std::decay<TChild>::type>
+    typename std::decay<T_Accessor>::type,
+    typename std::decay<T_Navigator>::type,
+    typename std::decay<T_Child>::type>
 {
     
     typedef pmacc::details::IteratorPrescription< 
-        typename std::decay<TAccessor>::type,
-        typename std::decay<TNavigator>::type,
-        typename std::decay<TChild>::type> Iterator;
+        typename std::decay<T_Accessor>::type,
+        typename std::decay<T_Navigator>::type,
+        typename std::decay<T_Child>::type> Iterator;
     
     return Iterator(
-        pmacc::iterator::forward<TAccessor>(accessor), 
-        pmacc::iterator::forward<TNavigator>(navigator),
-        pmacc::iterator::forward<TChild>(child));
+        pmacc::iterator::forward<T_Accessor>(accessor), 
+        pmacc::iterator::forward<T_Navigator>(navigator),
+        pmacc::iterator::forward<T_Child>(child));
 }
 
 } // namespace pmacc
 
 template<
-    typename TAccessor,
-    typename TNavigator,
-    typename TChild
+    typename T_Accessor,
+    typename T_Navigator,
+    typename T_Child
 >
-std::ostream& operator<<( std::ostream& out, pmacc::details::IteratorPrescription<TAccessor, TNavigator, TChild>  const & prescription) 
+std::ostream& operator<<( std::ostream& out, pmacc::details::IteratorPrescription<T_Accessor, T_Navigator, T_Child>  const & prescription) 
 {
 //      out << "Navigator: " << prescription.navigator << std::endl;
 //     out << "Child: " << prescription.child << std::endl;

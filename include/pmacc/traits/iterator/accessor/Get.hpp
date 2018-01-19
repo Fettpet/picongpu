@@ -34,25 +34,25 @@ namespace accessor
  * 1. A pointer to the container of the iterator,
  * 2. The index of the iterator
  * 
- * @tparam TContainer The container over which the iteartor walks.
- * @tparam TComponent The type of the element of the container.
- * @tparam TIndex The type of the index to get a component out of the container.
- * @tparam TContainerCategory An SFINAE type for categories.
+ * @tparam T_Container The container over which the iteartor walks.
+ * @tparam T_Component The type of the element of the container.
+ * @tparam T_Index The type of the index to get a component out of the container.
+ * @tparam T_ContainerCategory An SFINAE type for categories.
  */
 
 template<
-    typename TContainer,
-    typename TComponent,
-    typename TIndex,
-    typename TContainerCategory
+    typename T_Container,
+    typename T_Component,
+    typename T_Index,
+    typename T_ContainerCategory
 >
 struct Get
 {
     HDINLINE
-    TComponent& 
+    T_Component& 
     operator() (
-        TContainer*,
-        TIndex&
+        T_Container*,
+        T_Index&
     );
 };
 

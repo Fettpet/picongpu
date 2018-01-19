@@ -39,7 +39,10 @@ template<
 struct IdentityValue;
 
 
-template<typename T, uint_fast32_t value>
+template<
+    typename T,
+    uint_fast32_t value
+>
 struct IdentityValue
 {
     HDINLINE

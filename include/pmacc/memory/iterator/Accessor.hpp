@@ -221,7 +221,10 @@ struct Accessor
           IndexType const & index1,
           ContainerPtr const containerPtr2,
           IndexType const & index2)
-    -> typename std::enable_if<T == true, bool>::type
+    -> typename std::enable_if<
+        T == true,
+        bool
+    >::type
     {
         assert(containerPtr1 != nullptr);
         assert(containerPtr2 != nullptr);

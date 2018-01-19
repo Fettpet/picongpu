@@ -32,7 +32,7 @@ namespace traits
  * specify the position to get the current component out of the container.
  */
 template<
-    typename TContainer, 
+    typename T_Container,
     typename SFINAE = void
 >
 struct IndexType;

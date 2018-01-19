@@ -42,38 +42,50 @@ namespace navigator
  * 3. ContainerSizeFunction: If the number of elements within the container is
  * needed, this argument can be used. Call ContainerSizeFunction(Container*) to 
  * get the number of elements. This could be an expensiv operation.
- * @tparam TContainer The container over which the iteartor walks.
- * @tparam TIndex The type of the index to get a component out of the container.
- * @tparam TContainerCategory An SFINAE type for categories.
- * @tparam TOffset Type of the offset. This is a template of the function.
- * @tparam TSizeFunction This is used to give a function, which calculate the 
+ * @tparam T_Container The container over which the iteartor walks.
+ * @tparam T_Index The type of the index to get a component out of the container.
+ * @tparam T_ContainerCategory An SFINAE type for categories.
+ * @tparam T_Offset Type of the offset. This is a template of the function.
+ * @tparam T_SizeFunction This is used to give a function, which calculate the 
  * size of the container, to the trait. It is a template of the function, not of
  * the trait.
  */
 template<
-    typename TContainer,
-    typename TIndex,
-    typename TContainerCategory
+    typename T_Container,
+    typename T_Index,
+    typename T_ContainerCategory
 >
 struct AfterLastElement
 {
     template<
-        typename TSizeFunction,
-        typename TOffset
+        typename T_SizeFunction,
+        typename T_Offset
     >
     HDINLINE
-    bool
-    test (TContainer* conPtr, TIndex const & idx, const TOffset&,  TSizeFunction const & size)
-    const;
+    auto
+    test (
+        T_Container*,
+        T_Index const &,
+        T_Offset const &,
+        T_SizeFunction const &
+    )
+    const
+    -> bool;
     
     template<
-        typename TSizeFunction,
-        typename TOffset
+        typename T_SizeFunction,
+        typename T_Offset
     >
     HDINLINE
-    void
-    set(TContainer* conPtr, TIndex & idx, const TOffset&, TSizeFunction const & size)
-    const;
+    auto
+    set(
+        T_Container*,
+        T_Index &,
+        T_Offset const &,
+        T_SizeFunction const &
+    )
+    const
+    -> void;
 };
 
 

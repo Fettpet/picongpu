@@ -65,7 +65,7 @@ public:
 }; // class UndefinedAhead
 
 template<typename T>    
-struct OffsetRangeType
+struct OffseT_RangeType
 {
     T v;
     using type = decltype(v());
@@ -82,7 +82,7 @@ element. If the navigator is bidirectional it need also a last element, a
 previous element and a before first element. 
 
 The navigator has two traits for parallel 
-walking through the container. The first one is TOffset. This is used to get the 
+walking through the container. The first one is T_Offset. This is used to get the 
 distance from the first element of the container to the first element which will
 be accessed. This trait can be used to map the thread ID (for example offset 
 = threadIdx.x). The second trait is the jumpsize. The jumpsize is the distance
@@ -102,79 +102,79 @@ If the navigator is bidirectional three additional traits are needed
 The navigator use this 8 traits to define methodes for parallel iteration though
 the container.
  
-@tparam TContainer Type of the container,
-@tparam TComponent Type of the component of the container.
-@tparam TOffset Policy to get the offset. You need to specify the () operator.
-@tparam TJumpsize Policy to specify the Jumpsize. It need the operator ().
-@tparam TIndex Type of the index. The index is used to specify the iterator 
+@tparam T_Container Type of the container,
+@tparam T_Component Type of the component of the container.
+@tparam T_Offset Policy to get the offset. You need to specify the () operator.
+@tparam T_Jumpsize Policy to specify the Jumpsize. It need the operator ().
+@tparam T_Index Type of the index. The index is used to specify the iterator 
 position.
-@tparam TContainerSize Trait to specify the size of a container. It need the 
-function operator()(TContainer*). TContainer is a pointer to the container 
+@tparam T_ContainerSize Trait to specify the size of a container. It need the 
+function operator()(T_Container*). T_Container is a pointer to the container 
 instance over which the iterator walks.
-@tparam TFirstElement Trait to set the index to the first element. It need the 
-function operator()(TContainer*, TIndex&, const TRange). TRange is the result 
-type of TOffset's (). TContainer is a pointer to the container 
-instance over which the iterator walks. TIndex is used to describe the position.
-TRange is the offset.
-@tparam TNextElement Trait to set the index to the next element. The trait need 
-the function TRange operator()(TContainer*, TIndex&, TRange). The TRange 
+@tparam T_FirstElement Trait to set the index to the first element. It need the 
+function operator()(T_Container*, T_Index&, const T_Range). T_Range is the result 
+type of T_Offset's (). T_Container is a pointer to the container 
+instance over which the iterator walks. T_Index is used to describe the position.
+T_Range is the offset.
+@tparam T_NextElement Trait to set the index to the next element. The trait need 
+the function T_Range operator()(T_Container*, T_Index&, T_Range). The T_Range 
 parameter is used to handle the jumpsize. The result of this function is the 
 remaining jumpsize. A little example. Your container has 10 elements and your
 iterator is the the 8 element. Your jumpsize is 5. This means the new position
 would be 13. So the result of the function is 3, the remaining jumpsize.
-@tparam TAfterLastElement This Trait is used to check whether the iteration is 
+@tparam T_AfterLastElement This Trait is used to check whether the iteration is 
 after the last element. The function header is 
-bool operator()(TContainer*, TIndex&). It returns true, if the end is reached, 
+bool operator()(T_Container*, T_Index&). It returns true, if the end is reached, 
 and false otherwise.
-@tparam TLastElement This trait gives the last element which the iterator would
+@tparam T_LastElement This trait gives the last element which the iterator would
 access, befor the end is reached, in a forward iteration case. The function 
-head is operator()(TContainer*, TIndex&, const TRange). This trait is only 
+head is operator()(T_Container*, T_Index&, const T_Range). This trait is only 
 needed if the navigator is bidirectional. 
-@tparam TPreviousElement Trait to set the index to the previous element. The 
-trait need the function TRange operator()(TContainer*, TIndex&, TRange). This 
+@tparam T_PreviousElement Trait to set the index to the previous element. The 
+trait need the function T_Range operator()(T_Container*, T_Index&, T_Range). This 
 trait is only needed if the navigator is bidirectional. For fourther 
-informations see TNextElement.
-@tparam TBeforeFirstElement Used to check whether the iterator is before the
-first element. The function header is bool operator()(TContainer*, TIndex&). 
+informations see T_NextElement.
+@tparam T_BeforeFirstElement Used to check whether the iterator is before the
+first element. The function header is bool operator()(T_Container*, T_Index&). 
 It returns true, if the end is reached, and false otherwise.
 @tparam isBidirectional Set the navigator to bidirectional (true) or to forward
 only (false)
 */
 template<
-    typename TContainer,
-    typename TComponent,
-    typename TOffset,
-    typename TJumpsize,
-    typename TIndex,
-    typename TContainerSize,
-    typename TRange,
-    typename TFirstElement,
-    typename TNextElement,
-    typename TAfterLastElement,
-    typename TLastElement = pmacc::details::UndefinedType,
-    typename TPreviousElement = pmacc::details::UndefinedType,
-    typename TBeforeFirstElement = pmacc::details::UndefinedType,
-    bool isBidirectional = ! details::UndefinedLastElement<TLastElement>::value
+    typename T_Container,
+    typename T_Component,
+    typename T_Offset,
+    typename T_Jumpsize,
+    typename T_Index,
+    typename T_ContainerSize,
+    typename T_Range,
+    typename T_FirstElement,
+    typename T_NextElement,
+    typename T_AfterLastElement,
+    typename T_LastElement = pmacc::details::UndefinedType,
+    typename T_PreviousElement = pmacc::details::UndefinedType,
+    typename T_BeforeFirstElement = pmacc::details::UndefinedType,
+    bool isBidirectional = ! details::UndefinedLastElement<T_LastElement>::value
 >
 struct Navigator
 {
 // define the types 
-    using ContainerType = typename std::decay<TContainer>::type;
+    using ContainerType = typename std::decay<T_Container>::type;
     using ContainerPtr = ContainerType*;
     using ContainerRef = ContainerType&;
-    using ComponentType = TComponent;
+    using ComponentType = T_Component;
     using ComponentPtr = ComponentType*;
-    using JumpsizeType = TJumpsize;
-    using OffsetType = TOffset;
-    using IndexType = TIndex;
-    using RangeType = TRange;
-    using NumberElements = TContainerSize;
-    using FirstElement = TFirstElement;
-    using NextElement = TNextElement;
-    using AfterLastElement = TAfterLastElement;
-    using LastElement = TLastElement;
-    using PreviousElement = TPreviousElement;
-    using BeforeFirstElement = TBeforeFirstElement;
+    using JumpsizeType = T_Jumpsize;
+    using OffsetType = T_Offset;
+    using IndexType = T_Index;
+    using RangeType = T_Range;
+    using NumberElements = T_ContainerSize;
+    using FirstElement = T_FirstElement;
+    using NextElement = T_NextElement;
+    using AfterLastElement = T_AfterLastElement;
+    using LastElement = T_LastElement;
+    using PreviousElement = T_PreviousElement;
+    using BeforeFirstElement = T_BeforeFirstElement;
 
     
 public:
@@ -260,7 +260,10 @@ public:
         IndexType & index,
         RangeType distance
     )
-    -> typename std::enable_if<T==true, RangeType>::type
+    -> typename std::enable_if<
+        T==true,
+        RangeType
+    >::type
     {
         assert(containerPtr != nullptr); // containerptr should be valid
         // We jump over distance * jumpsize elements
@@ -494,14 +497,14 @@ protected:
  */
 
 template<
-    typename TOffset,
-    typename TJumpsize
+    typename T_Offset,
+    typename T_Jumpsize
 >
 struct Navigator<
     pmacc::details::UndefinedType,
     pmacc::details::UndefinedType,
-    TOffset,
-    TJumpsize,
+    T_Offset,
+    T_Jumpsize,
     pmacc::details::UndefinedType,
     pmacc::details::UndefinedType,
     pmacc::details::UndefinedType,
@@ -518,8 +521,8 @@ struct Navigator<
     using ContainerRef = ContainerType&;
     using ComponentType = pmacc::details::UndefinedType ;
     using ComponentPtr = ComponentType*;
-    using JumpsizeType = TJumpsize;
-    using OffsetType = TOffset;
+    using JumpsizeType = T_Jumpsize;
+    using OffsetType = T_Offset;
     using IndexType = pmacc::details::UndefinedType ;
     using RangeType = pmacc::details::UndefinedType ;
     using NumberElements = pmacc::details::UndefinedType ;
@@ -541,16 +544,16 @@ struct Navigator<
        @param jumpsize distance between two elements
     */
     template<
-        typename TOffset_,
-        typename TJumpsize_
+        typename T_Offset_,
+        typename T_Jumpsize_
     >
     HDINLINE
     Navigator(
-            TOffset_ && offset, 
-            TJumpsize_ && jumpsize
+            T_Offset_ && offset, 
+            T_Jumpsize_ && jumpsize
     ):
-        offset(pmacc::iterator::forward<TOffset_>(offset)),
-        jumpsize(pmacc::iterator::forward<TJumpsize_>(jumpsize))
+        offset(pmacc::iterator::forward<T_Offset_>(offset)),
+        jumpsize(pmacc::iterator::forward<T_Jumpsize_>(jumpsize))
     {}
     
     OffsetType offset;
@@ -566,21 +569,21 @@ struct Navigator<
  * 
  */
 template<
-    typename TOffset,
-    typename TJumpsize
+    typename T_Offset,
+    typename T_Jumpsize
 >
 HDINLINE
 auto 
 makeNavigator(
-    TOffset && offset,
-    TJumpsize && jumpsize
+    T_Offset && offset,
+    T_Jumpsize && jumpsize
 )
 -> 
     pmacc::Navigator<
         details::UndefinedType,
         details::UndefinedType,
-        typename std::decay<TOffset>::type,
-        typename std::decay<TJumpsize>::type,
+        typename std::decay<T_Offset>::type,
+        typename std::decay<T_Jumpsize>::type,
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
         pmacc::details::UndefinedType,
@@ -592,8 +595,8 @@ makeNavigator(
         pmacc::details::UndefinedType,
         false>
 {
-    typedef typename std::decay<TOffset>::type OffsetType;
-    typedef typename std::decay<TJumpsize>::type JumpsizeType;
+    typedef typename std::decay<T_Offset>::type OffsetType;
+    typedef typename std::decay<T_Jumpsize>::type JumpsizeType;
     typedef pmacc::Navigator<
         details::UndefinedType,
         details::UndefinedType,
@@ -610,8 +613,8 @@ makeNavigator(
         pmacc::details::UndefinedType,
         false> ResultType;
     auto && result = ResultType(
-        pmacc::iterator::forward<TOffset>(offset),
-        pmacc::iterator::forward<TJumpsize>(jumpsize));
+        pmacc::iterator::forward<T_Offset>(offset),
+        pmacc::iterator::forward<T_Jumpsize>(jumpsize));
     return result;
 }
 
@@ -643,109 +646,109 @@ namespace details
 
 
 template<
-    typename TContainer,
-    typename TContainerNoRef = typename std::decay<TContainer>::type,
-    typename TNavigator,
-    typename TOffset = typename details::NavigatorTemplates<
-        TNavigator
+    typename T_Container,
+    typename T_ContainerNoRef = typename std::decay<T_Container>::type,
+    typename T_Navigator,
+    typename T_Offset = typename details::NavigatorTemplates<
+        T_Navigator
     >::OffsetType,
-    typename TJumpsize = typename details::NavigatorTemplates<
-        TNavigator
+    typename T_Jumpsize = typename details::NavigatorTemplates<
+        T_Navigator
     >::JumpsizeType,
-    typename TComponent = typename pmacc::traits::ComponentType<
-        TContainerNoRef
+    typename T_Component = typename pmacc::traits::ComponentType<
+        T_ContainerNoRef
     >::type,
-    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<
-        TContainerNoRef
+    typename T_ContainerCategorie = typename pmacc::traits::ContainerCategory<
+        T_ContainerNoRef
     >::type,
-    typename TContainerSize = typename pmacc::traits::NumberElements<
-        TContainerNoRef
+    typename T_ContainerSize = typename pmacc::traits::NumberElements<
+        T_ContainerNoRef
     >,
-    typename TIndex = typename pmacc::traits::IndexType<
-        TContainerNoRef
+    typename T_Index = typename pmacc::traits::IndexType<
+        T_ContainerNoRef
     >::type,
-    typename TRange = typename std::decay<
-        typename OffsetRangeType<TOffset>::type
+    typename T_Range = typename std::decay<
+        typename OffseT_RangeType<T_Offset>::type
     >::type,
-    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie
+    typename T_FirstElement = typename pmacc::traits::navigator::FirstElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie
     >,
-    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie
+    typename T_AfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie
     >,
-    typename TNextElement = typename pmacc::traits::navigator::NextElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_NextElement = typename pmacc::traits::navigator::NextElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >,
-    typename TLastElement = typename pmacc::traits::navigator::LastElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie>,
-    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_LastElement = typename pmacc::traits::navigator::LastElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie>,
+    typename T_PreviousElement = typename pmacc::traits::navigator::PreviousElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >,
-    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_BeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >,
     bool isBidirectional = not std::is_same<
-        TLastElement, 
+        T_LastElement, 
         pmacc::details::UndefinedType
     >::value
 >
 auto
 HDINLINE
-makeNavigator(TNavigator && navi)
+makeNavigator(T_Navigator && navi)
 ->
 pmacc::Navigator<
-    TContainerNoRef,
-    TComponent,
-    TOffset,
-    TJumpsize,
-    TIndex,
-    TContainerSize,
-    TRange,
-    TFirstElement,
-    TNextElement,
-    TAfterLastElement,
-    TLastElement,
-    TPreviousElement,
-    TBeforeFirstElement,
+    T_ContainerNoRef,
+    T_Component,
+    T_Offset,
+    T_Jumpsize,
+    T_Index,
+    T_ContainerSize,
+    T_Range,
+    T_FirstElement,
+    T_NextElement,
+    T_AfterLastElement,
+    T_LastElement,
+    T_PreviousElement,
+    T_BeforeFirstElement,
     isBidirectional
 >
 {
     using ResultType = pmacc::Navigator<
-        TContainerNoRef,
-        TComponent,
-        TOffset,
-        TJumpsize,
-        TIndex,
-        TContainerSize,
-        TRange,
-        TFirstElement,
-        TNextElement,
-        TAfterLastElement,
-        TLastElement,
-        TPreviousElement,
-        TBeforeFirstElement,
+        T_ContainerNoRef,
+        T_Component,
+        T_Offset,
+        T_Jumpsize,
+        T_Index,
+        T_ContainerSize,
+        T_Range,
+        T_FirstElement,
+        T_NextElement,
+        T_AfterLastElement,
+        T_LastElement,
+        T_PreviousElement,
+        T_BeforeFirstElement,
         isBidirectional
     > ;
         
 
     auto && result = ResultType(
-        pmacc::iterator::forward<TOffset>(navi.offset),
-        pmacc::iterator::forward<TJumpsize>(navi.jumpsize)
+        pmacc::iterator::forward<T_Offset>(navi.offset),
+        pmacc::iterator::forward<T_Jumpsize>(navi.jumpsize)
     );
 
     return result;
@@ -764,105 +767,105 @@ pmacc::Navigator<
  */
 
 template<
-    typename TContainer,
-    typename TContainerNoRef = typename std::decay<TContainer>::type,
-    typename TOffset,
-    typename TJumpsize,
-    typename TComponent = typename pmacc::traits::ComponentType<
-        TContainerNoRef
+    typename T_Container,
+    typename T_ContainerNoRef = typename std::decay<T_Container>::type,
+    typename T_Offset,
+    typename T_Jumpsize,
+    typename T_Component = typename pmacc::traits::ComponentType<
+        T_ContainerNoRef
     >::type,
-    typename TContainerCategorie = typename pmacc::traits::ContainerCategory<
-        TContainerNoRef
+    typename T_ContainerCategorie = typename pmacc::traits::ContainerCategory<
+        T_ContainerNoRef
     >::type,
-    typename TContainerSize = typename pmacc::traits::NumberElements<
-        TContainerNoRef
+    typename T_ContainerSize = typename pmacc::traits::NumberElements<
+        T_ContainerNoRef
     >::type,
-    typename TIndex = typename pmacc::traits::IndexType<
-        TContainerNoRef
+    typename T_Index = typename pmacc::traits::IndexType<
+        T_ContainerNoRef
     >::type,
-    typename TRange = decltype(TOffset::operator()()),
-    typename TFirstElement = typename pmacc::traits::navigator::FirstElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie
+    typename T_Range = decltype(T_Offset::operator()()),
+    typename T_FirstElement = typename pmacc::traits::navigator::FirstElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie
     >::type,
-    typename TAfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie
+    typename T_AfterLastElement = typename pmacc::traits::navigator::AfterLastElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie
     >::type,
-    typename TNextElement = typename pmacc::traits::navigator::NextElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_NextElement = typename pmacc::traits::navigator::NextElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >::type,
-    typename TLastElement = typename pmacc::traits::navigator::LastElement<
-        TContainerNoRef, 
-        TIndex, 
-        TContainerCategorie
+    typename T_LastElement = typename pmacc::traits::navigator::LastElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_ContainerCategorie
     >::type,
-    typename TPreviousElement = typename pmacc::traits::navigator::PreviousElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_PreviousElement = typename pmacc::traits::navigator::PreviousElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >::type,
-    typename TBeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
-        TContainerNoRef, 
-        TIndex, 
-        TRange, 
-        TContainerCategorie
+    typename T_BeforeFirstElement = typename pmacc::traits::navigator::BeforeFirstElement<
+        T_ContainerNoRef, 
+        T_Index, 
+        T_Range, 
+        T_ContainerCategorie
     >::type,
     bool isBidirectional = not std::is_same<
-        TLastElement, 
+        T_LastElement, 
         pmacc::details::UndefinedType
     >::value
 >
 auto 
 HDINLINE
 makeNavigator(
-    TOffset && offset,
-    TJumpsize && jumpsize
+    T_Offset && offset,
+    T_Jumpsize && jumpsize
 )
 -> 
     pmacc::Navigator<
-        TContainerNoRef,
-        TComponent,
-        TOffset,
-        TJumpsize,
-        TIndex,
-        TContainerSize,
-        TRange,
-        TFirstElement,
-        TNextElement,
-        TAfterLastElement,
-        TLastElement,
-        TPreviousElement,
-        TBeforeFirstElement,
+        T_ContainerNoRef,
+        T_Component,
+        T_Offset,
+        T_Jumpsize,
+        T_Index,
+        T_ContainerSize,
+        T_Range,
+        T_FirstElement,
+        T_NextElement,
+        T_AfterLastElement,
+        T_LastElement,
+        T_PreviousElement,
+        T_BeforeFirstElement,
         isBidirectional
     >
 {
 
     using ResultType =  pmacc::Navigator<
-        TContainerNoRef,
-        TComponent,
-        TOffset,
-        TJumpsize,
-        TIndex,
-        TContainerSize,
-        TRange,
-        TFirstElement,
-        TNextElement,
-        TAfterLastElement,
-        TLastElement,
-        TPreviousElement,
-        TBeforeFirstElement,
+        T_ContainerNoRef,
+        T_Component,
+        T_Offset,
+        T_Jumpsize,
+        T_Index,
+        T_ContainerSize,
+        T_Range,
+        T_FirstElement,
+        T_NextElement,
+        T_AfterLastElement,
+        T_LastElement,
+        T_PreviousElement,
+        T_BeforeFirstElement,
         isBidirectional
     > ;
     auto && result = ResultType(
-        pmacc::iterator::forward<TOffset>(offset),
-        pmacc::iterator::forward<TJumpsize>(jumpsize)
+        pmacc::iterator::forward<T_Offset>(offset),
+        pmacc::iterator::forward<T_Jumpsize>(jumpsize)
     );
     
     return result;

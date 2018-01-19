@@ -33,25 +33,25 @@ namespace navigator
  * 1. A pointer to the container
  * 2. A reference to the index
  * 3. Jumpsize: Distance between the current and successor the element.
- * 4. TContainerSize: Trait to get the size of the container. 
+ * 4. T_ContainerSize: Trait to get the size of the container. 
 
- * @tparam TContainer The container over which the iteartor walks.
- * @tparam TIndex The type of the index to get a component out of the container.
- * @tparam TContainerCategory An SFINAE type for categories.
+ * @tparam T_Container The container over which the iteartor walks.
+ * @tparam T_Index The type of the index to get a component out of the container.
+ * @tparam T_ContainerCategory An SFINAE type for categories.
  * @tparam TJumpsize Type of the offset. This is a template of the function, not
  * of the trait.
  * @tparam TSizeFunction Function to get the size of a container. You can use 
- * TSizeFunction(TContainer*) to get the number of the container. This is a 
+ * TSizeFunction(T_Container*) to get the number of the container. This is a 
  * template of the function.
 * @result If the jumpsize is greater than the remaining elements in the
  * container, the result is the "unjumped" elements. 
  * i.e [Hypotetical positon] - size(container)
  */
 template<
-    typename TContainer,
-    typename TIndex,
-    typename TRange = void,
-    typename TContainerCategory = void
+    typename T_Container,
+    typename T_Index,
+    typename T_Range = void,
+    typename T_ContainerCategory = void
 >
 struct NextElement;
 

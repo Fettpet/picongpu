@@ -33,7 +33,7 @@ namespace traits
  */
 
 template<
-    typename TContainerCategorie,
+    typename T_ContainerCategorie,
     typename SFIANE = void
 >
 struct RangeType;
