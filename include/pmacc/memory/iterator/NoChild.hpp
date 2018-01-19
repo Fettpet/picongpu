@@ -20,23 +20,14 @@
  */
 
 #pragma once
-#include "pmacc/types.hpp"
+
 namespace pmacc 
 {
 
 /**
  * @brief The NoChild is used to define the last layer in a nested Iterator
  */
-struct NoChild {
-    HDINLINE
-    bool 
-    debug_Test()
-    {
-        return true;
-    }
-    
-    const bool test = true;
-} ;
+struct NoChild;
     
 }
 
