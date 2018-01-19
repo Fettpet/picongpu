@@ -70,6 +70,7 @@ public:
     }
 
     HDINLINE
+    auto
     LastFramePtr()
     const
     ->  const T_Frame*
