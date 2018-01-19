@@ -32,8 +32,10 @@ namespace pmacc
  * templates. This is the reason why uint_fast32_t is used, since a template 
  * type as template isn't allowed.
  */
-template<typename T, 
-         uint_fast32_t value = static_cast<uint_fast32_t>(0xffffffff)>
+template<
+    typename T,
+    uint_fast32_t value = static_cast<uint_fast32_t>(0xffffffff)
+>
 struct IdentityValue;
 
 
@@ -64,7 +66,10 @@ struct IdentityValue
 
 
 template<typename T>
-struct IdentityValue<T, static_cast<uint_fast32_t>(0xffffffff)>
+struct IdentityValue<
+    T,
+    static_cast<uint_fast32_t>(0xffffffff)
+>
 {
     
     HDINLINE
@@ -82,7 +87,8 @@ struct IdentityValue<T, static_cast<uint_fast32_t>(0xffffffff)>
     IdentityValue() = delete;
     
     HDINLINE
-    IdentityValue& operator=( IdentityValue const &) = default;
+    IdentityValue&
+    operator=( IdentityValue const &) = default;
     
     HDINLINE
     T 
