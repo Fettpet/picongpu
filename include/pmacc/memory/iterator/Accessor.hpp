@@ -46,8 +46,15 @@ class UndefinedAhead
     using one = char;
     using two = long ;
 
-    template <typename C> static one test( decltype(&C::UNDEFINED) );
-    template <typename C> static two test(...);    
+    template <typename C>
+    static
+    one
+    test( decltype(&C::UNDEFINED) );
+
+    template <typename C>
+    static
+    two
+    test(...);
 
 public:
     enum 
@@ -123,7 +130,8 @@ template<
         T_Index, 
         T_ContainerCategory
     >,
-    bool isRandomAccessable = not details::UndefinedAhead<T_Ahead>::value >
+    bool isRandomAccessable = not details::UndefinedAhead<T_Ahead>::value
+>
 struct Accessor
 {
     using ContainerType = T_Container;
@@ -242,7 +250,10 @@ struct Accessor
           IndexType const & index1,
           ContainerPtr const containerPtr2,
           IndexType const & index2)
-    -> typename std::enable_if<T == true, bool>::type
+    -> typename std::enable_if<
+        T == true,
+        bool
+    >::type
     {
         assert(containerPtr1 != nullptr);
         assert(containerPtr2 != nullptr);
@@ -278,12 +289,8 @@ struct Accessor<
 {
     
     HDINLINE Accessor() = default;
-    HDINLINE Accessor(
-        Accessor const &
-    ) = default;
-    HDINLINE Accessor(
-        Accessor &&
-    ) = default;
+    HDINLINE Accessor( Accessor const & ) = default;
+    HDINLINE Accessor( Accessor && ) = default;
 } ;
 
 namespace details 
@@ -309,8 +316,12 @@ template<
     typename T_Container,
     typename T_ContainerNoRef = typename std::decay<T_Container>::type,
     typename T_Index = typename pmacc::traits::IndexType<T_ContainerNoRef>::type,
-    typename T_ContainerCategory = typename pmacc::traits::ContainerCategory<typename std::decay<T_Container>::type>::type,
-    typename T_Component = typename pmacc::traits::ComponentType<T_ContainerNoRef>::type,
+    typename T_ContainerCategory =
+        typename pmacc::traits::ContainerCategory<
+            typename std::decay<T_Container>::type
+        >::type,
+    typename T_Component =
+        typename pmacc::traits::ComponentType<T_ContainerNoRef>::type,
     typename T_Get = pmacc::traits::accessor::Get<
         T_ContainerNoRef, 
         T_Component, 
@@ -335,7 +346,8 @@ template<
         T_Index, 
         T_ContainerCategory
     >, 
-    typename T_Accessor>
+    typename T_Accessor
+>
 HDINLINE
 auto 
 makeAccessor(
@@ -349,7 +361,8 @@ makeAccessor(
     T_Get,
     T_Ahead,
     T_Equal,
-    T_Behind>
+    T_Behind
+>
 {
     using AccessorType = pmacc::Accessor<
         T_ContainerNoRef,
