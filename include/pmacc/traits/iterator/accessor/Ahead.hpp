@@ -49,12 +49,18 @@ template<
     typename TContainer,
     typename TComponent,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct Ahead
 {
     HDINLINE
     bool
-    operator() (TContainer*, TIndex&, TContainer*, TIndex&);
+    operator() (
+        TContainer*,
+        TIndex&,
+        TContainer*,
+        TIndex&
+    );
     
 };
 

@@ -46,7 +46,8 @@ namespace navigator
 template<
     typename TContainer,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct FirstElement
 {
 
@@ -54,7 +55,8 @@ struct FirstElement
     void
     operator() (
         TContainer*, 
-        TIndex&);
+        TIndex&
+    );
     
 };
 

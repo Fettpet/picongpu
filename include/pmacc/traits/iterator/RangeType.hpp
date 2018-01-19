@@ -32,7 +32,10 @@ namespace traits
  * by this trait.
  */
 
-template<typename TContainerCategorie, typename SFIANE = void>
+template<
+    typename TContainerCategorie,
+    typename SFIANE = void
+>
 struct RangeType;
 }// namespace traits
 }// namespace pmacc

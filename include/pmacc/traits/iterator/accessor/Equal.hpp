@@ -33,7 +33,8 @@ template<
     typename TContainer,
     typename TComponent,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct Equal
 {
     
@@ -56,7 +57,12 @@ struct Equal
  */
     HDINLINE
     bool
-    operator() (TContainer*, TIndex&, TContainer*, TIndex&);
+    operator() (
+        TContainer*,
+        TIndex&,
+        TContainer*,
+        TIndex&
+    );
 };
 
 

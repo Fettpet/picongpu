@@ -53,7 +53,8 @@ template<
     typename TContainer,
     typename TIndex,
     typename TOffset,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct BeforeFirstElement
 {
     template<typename TSizeFunction>

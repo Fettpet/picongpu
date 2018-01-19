@@ -51,7 +51,8 @@ template<
     typename TContainer,
     typename TIndex,
     typename TRange = void,
-    typename TContainerCategory = void>
+    typename TContainerCategory = void
+>
 struct NextElement;
 
 

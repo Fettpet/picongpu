@@ -50,16 +50,18 @@ namespace navigator
 template<
     typename TContainer,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct LastElement
 {
     template<
         typename TSizeFunction>
     HDINLINE
     void
-    operator() (TContainer*, TIndex&, TSizeFunction&);
-    
-    HDINLINE void UNDEFINED();
+    operator() (
+        TContainer*,
+        TIndex&,
+        TSizeFunction&);
 };
 
 

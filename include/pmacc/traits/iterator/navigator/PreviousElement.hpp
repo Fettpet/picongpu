@@ -53,7 +53,8 @@ template<
     typename TContainer,
     typename TIndex,
     typename TRange,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct PreviousElement;
 
 

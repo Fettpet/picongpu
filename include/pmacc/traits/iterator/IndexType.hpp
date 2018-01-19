@@ -33,11 +33,9 @@ namespace traits
  */
 template<
     typename TContainer, 
-    typename SFINAE = void>
-struct IndexType
-{
-    typedef int_fast32_t type; 
-};
+    typename SFINAE = void
+>
+struct IndexType;
 
 
 } // namespace traits

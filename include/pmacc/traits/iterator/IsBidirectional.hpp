@@ -30,7 +30,10 @@ namespace traits
  * The deepiterator has the functions --it and it-- if it is bidirectional.
  */
 
-template<typename TContainerCategorie, typename SFIANE = void>
+template<
+    typename TContainerCategorie,
+    typename SFIANE = void
+>
 struct IsBidirectional;
 
 }// namespace traits

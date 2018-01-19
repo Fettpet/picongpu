@@ -44,12 +44,16 @@ template<
     typename TContainer,
     typename TComponent,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct Get
 {
     HDINLINE
     TComponent& 
-    operator() (TContainer*, TIndex&);
+    operator() (
+        TContainer*,
+        TIndex&
+    );
 };
 
 

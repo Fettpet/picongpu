@@ -32,7 +32,10 @@ namespace traits
  * values easily. Mostly a container is random accessable if the operator [] is
  * overloaded. 
  */
-template<typename TContainerCategorie, typename SFIANE = void>
+template<
+    typename TContainerCategorie,
+    typename SFIANE = void
+>
 struct IsRandomAccessable;
 
 

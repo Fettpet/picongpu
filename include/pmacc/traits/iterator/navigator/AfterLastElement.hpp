@@ -53,16 +53,23 @@ namespace navigator
 template<
     typename TContainer,
     typename TIndex,
-    typename TContainerCategory>
+    typename TContainerCategory
+>
 struct AfterLastElement
 {
-    template<typename TSizeFunction, typename TOffset>
+    template<
+        typename TSizeFunction,
+        typename TOffset
+    >
     HDINLINE
     bool
     test (TContainer* conPtr, TIndex const & idx, const TOffset&,  TSizeFunction const & size)
     const;
     
-    template<typename TSizeFunction, typename TOffset>
+    template<
+        typename TSizeFunction,
+        typename TOffset
+    >
     HDINLINE
     void
     set(TContainer* conPtr, TIndex & idx, const TOffset&, TSizeFunction const & size)
