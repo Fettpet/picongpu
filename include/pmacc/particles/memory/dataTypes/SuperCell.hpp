@@ -30,55 +30,81 @@
 namespace pmacc
 {
 
-template <class TYPE>
+template <typename T_Frame>
 class SuperCell
 {
 public:
 
-    HDINLINE SuperCell() :
-    firstFramePtr(nullptr),
-    lastFramePtr(nullptr),
-    mustShiftVal(false),
-    sizeLastFrame(0)
+    HDINLINE
+    SuperCell() :
+        firstFramePtr(nullptr),
+        lastFramePtr(nullptr),
+        mustShiftVal(false),
+        sizeLastFrame(0)
     {
     }
 
-    HDINLINE TYPE* FirstFramePtr()
-    {
-        return firstFramePtr;
-    }
-
-    HDINLINE TYPE* LastFramePtr()
-    {
-        return lastFramePtr;
-    }
-
-    HDINLINE const TYPE* FirstFramePtr() const
+    HDINLINE
+    auto
+    FirstFramePtr()
+    -> T_Frame*
     {
         return firstFramePtr;
     }
 
-    HDINLINE const TYPE* LastFramePtr() const
+    HDINLINE
+    auto
+    LastFramePtr()
+    -> T_Frame*
     {
         return lastFramePtr;
     }
 
-    HDINLINE bool mustShift()
+    HDINLINE
+    auto
+    FirstFramePtr( )
+    const
+    -> const T_Frame*
+    {
+        return firstFramePtr;
+    }
+
+    HDINLINE
+    LastFramePtr()
+    const
+    ->  const T_Frame*
+    {
+        return lastFramePtr;
+    }
+
+    HDINLINE
+    auto
+    mustShift()
+    ->bool
     {
         return mustShiftVal;
     }
 
-    HDINLINE void setMustShift(bool value)
+    HDINLINE
+    auto
+    setMustShift(bool value)
+    -> void
     {
         mustShiftVal = value;
     }
 
-    HDINLINE lcellId_t getSizeLastFrame()
+    HDINLINE
+    auto
+    getSizeLastFrame()
+    -> lcellId_t
     {
         return sizeLastFrame;
     }
 
-    HDINLINE void setSizeLastFrame(lcellId_t size)
+    HDINLINE
+    auto
+    setSizeLastFrame(lcellId_t size)
+    ->void
     {
         sizeLastFrame = size;
     }
@@ -88,8 +114,8 @@ private:
     PMACC_ALIGN(mustShiftVal, bool);
     PMACC_ALIGN(sizeLastFrame, lcellId_t);
 public:
-    PMACC_ALIGN(firstFramePtr, TYPE*);
-    PMACC_ALIGN(lastFramePtr, TYPE*);
+    PMACC_ALIGN(firstFramePtr, T_Frame*);
+    PMACC_ALIGN(lastFramePtr, T_Frame*);
 };
 
 namespace traits 
@@ -99,17 +125,20 @@ namespace traits
 varible, where the number of frames is stored. So we start at the first and 
 count.
 */
-template<
-typename T>
+template< typename T>
 struct NumberElements<pmacc::SuperCell<T> >
 {
+private:
     typedef pmacc::SuperCell<T> ContainerType;
+public:
 
-    uint_fast32_t
+    auto
     HDINLINE
     operator()(ContainerType* container)
+    const
+    -> uint_fast32_t
     {
-        auto result = 0;
+        uint_fast32_t result = 0;
         auto tmp = container->firstFramePtr;
         while(tmp != nullptr)
         {
@@ -120,22 +149,19 @@ struct NumberElements<pmacc::SuperCell<T> >
     }
 };
 
-template<
-typename T>
+template< typename T>
 struct HasConstantSize<pmacc::SuperCell<T> >
 {
     const static bool value = false;
 };
 
-template<
-    typename T_Container>
+template< typename T_Container>
 struct ContainerCategory<pmacc::SuperCell<T_Container> >
 {
     typedef pmacc::traits::categorie::SupercellLike type;
 };
 
-template<
-typename T>
+template< typename T>
 struct ComponentType<pmacc::SuperCell<T> >
 {
     typedef T type;
