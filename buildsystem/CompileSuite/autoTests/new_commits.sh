@@ -94,9 +94,9 @@ touch "$thisDir"runGuard
             #export PIC_COMPILE_SUITE_CMAKE="-DPIC_ENABLE_PNG=OFF -DALPAKA_CUDA_ARCH=35"
             export PIC_BACKEND="cuda"
             . /etc/profile
-            module load gcc/4.9.4 boost/1.62.0 cmake/3.7.0 cuda/8.0.44 openmpi/1.10.4
+            module load gcc/4.9.4 boost/1.62.0 cmake/3.10.0 cuda/8.0.44 openmpi/1.10.4
             module load libSplash/1.6.0 adios/1.10.0
-            module load pngwriter/0.5.6 rivlib/1.0.2
+            module load pngwriter/0.7.0 rivlib/1.0.2
             module load libjpeg-turbo/1.5.1 icet/2.1.1 jansson/2.9 isaac/1.1.0
 
             # compile all examples, fetch output and return code

@@ -22,7 +22,7 @@
 # Required cmake version
 ################################################################################
 
-cmake_minimum_required(VERSION 3.7.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 
 ################################################################################
@@ -279,17 +279,16 @@ endif()
 # libSplash (+ hdf5 due to required headers)
 ################################################################################
 
-# find libSplash installation
-# prefer static libraries over shared ones (but do not force them)
-set(Splash_USE_STATIC_LIBS ON)
-find_package(Splash 1.6.0 COMPONENTS PARALLEL)
+find_package(Splash 1.7.0 CONFIG COMPONENTS PARALLEL)
 
-if(Splash_FOUND)
-    include_directories(SYSTEM ${Splash_INCLUDE_DIRS})
-    list(APPEND Splash_DEFINITIONS "-DENABLE_HDF5=1")
-    add_definitions(${Splash_DEFINITIONS})
-    set(LIBS ${LIBS} ${Splash_LIBRARIES})
-endif(Splash_FOUND)
+if(TARGET Splash::Splash)
+    add_definitions(-DENABLE_HDF5=1)
+    set(LIBS ${LIBS} Splash::Splash)
+    message(STATUS "Found Splash: ${Splash_DIR}")
+else()
+    message(STATUS "Could NOT find Splash - "
+                   "set Splash_DIR or check your CMAKE_PREFIX_PATH")
+endif()
 
 
 ################################################################################
@@ -297,13 +296,15 @@ endif(Splash_FOUND)
 ################################################################################
 
 # find PNGwriter installation
-find_package(PNGwriter 0.5.6)
+find_package(PNGwriter 0.7.0 CONFIG)
 
 if(PNGwriter_FOUND)
-    include_directories(SYSTEM ${PNGwriter_INCLUDE_DIRS})
-    list(APPEND PNGwriter_DEFINITIONS "-DPIC_ENABLE_PNG=1")
-    add_definitions(${PNGwriter_DEFINITIONS})
-    set(LIBS ${LIBS} ${PNGwriter_LIBRARIES})
+    set(LIBS ${LIBS} PNGwriter::PNGwriter)
+    add_definitions(-DPIC_ENABLE_PNG=1)
+    message(STATUS "Found PNGwriter: ${PNGwriter_DIR}")
+else()
+    message(STATUS "Could NOT find PNGwriter - "
+                   "set PNGwriter_DIR or check your CMAKE_PREFIX_PATH")
 endif(PNGwriter_FOUND)
 
 
@@ -354,7 +355,7 @@ endif(ISAAC_FOUND)
 ################################################################################
 
 find_path(PIC_EXTENSION_PATH
-    NAMES include/simulation_defines/param/components.param
+    NAMES include/picongpu/param/components.param
     PATHS "${CMAKE_CURRENT_SOURCE_DIR}"
     DOC "search PATH to extension folder"
     NO_DEFAULT_PATH
@@ -362,7 +363,7 @@ find_path(PIC_EXTENSION_PATH
     NO_CMAKE_SYSTEM_PATH
     )
 
-set(PIC_COPY_ON_INSTALL "include/picongpu/simulation_defines;etc/picongpu;lib"
+set(PIC_COPY_ON_INSTALL "include/picongpu;etc/picongpu;lib"
     CACHE LIST
     "Folders that are copied to installation path during install" )
 
@@ -471,7 +472,7 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../bin/" DESTINATION bin
 if( (NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "${PIC_EXTENSION_PATH}") OR
     (NOT EXISTS "${CMAKE_INSTALL_PREFIX}/include"))
 
-    #copy all important subfolders to install folder
+    # copy all important subfolders to install folder
     foreach(dir ${PIC_COPY_ON_INSTALL})
 
       #if source not exists than copy

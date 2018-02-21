@@ -36,6 +36,7 @@
 #include <pmacc/compileTime/GetKeyFromAlias.hpp>
 #include <pmacc/HandleGuardRegion.hpp>
 #include <pmacc/traits/Resolve.hpp>
+#include <pmacc/traits/GetCTName.hpp>
 
 #include <boost/mpl/if.hpp>
 #include <boost/mpl/contains.hpp>
@@ -109,7 +110,7 @@ class Particles : public ParticlesBase<
 {
 public:
 
-    typedef ParticleDescription<
+    typedef pmacc::ParticleDescription<
         T_Name,
         SuperCellSize,
         T_Attributes,
@@ -137,13 +138,13 @@ public:
             >
         >::type
     > SpeciesParticleDescription;
-    typedef ParticlesBase<SpeciesParticleDescription, MappingDesc, DeviceHeap> ParticlesBaseType;
+    typedef ParticlesBase<SpeciesParticleDescription, picongpu::MappingDesc, DeviceHeap> ParticlesBaseType;
     typedef typename ParticlesBaseType::FrameType FrameType;
     typedef typename ParticlesBaseType::FrameTypeBorder FrameTypeBorder;
     typedef typename ParticlesBaseType::ParticlesBoxType ParticlesBoxType;
 
 
-    Particles(const std::shared_ptr<DeviceHeap>& heap, MappingDesc cellDescription, SimulationDataId datasetID);
+    Particles(const std::shared_ptr<DeviceHeap>& heap, picongpu::MappingDesc cellDescription, SimulationDataId datasetID);
 
     void createParticleBuffer();
 
@@ -250,3 +251,26 @@ namespace traits
     };
 } //namespace traits
 } //namespace picongpu
+
+namespace pmacc
+{
+namespace traits
+{
+    template<
+        typename T_Name,
+        typename T_Flags,
+        typename T_Attributes
+    >
+    struct GetCTName<
+        ::picongpu::Particles<
+            T_Name,
+            T_Flags,
+            T_Attributes
+        >
+    >
+    {
+        using type = T_Name;
+    };
+
+} // namepsace traits
+} // namespace pmacc
