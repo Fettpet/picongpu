@@ -30,6 +30,11 @@ namespace traits
  * @brief Each container category need to specify one range type. This is the 
  * type of the distance between two iterator points. This range type is covered 
  * by this trait.
+ * The type of the trait has two conditions:
+ * 1. it need a constructor, such that is can be create from an int
+ * 2. it need a cast to int.
+ * 3. overloaded ++ operator
+ * 4. <
  */
 
 template<

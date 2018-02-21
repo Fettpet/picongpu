@@ -222,7 +222,7 @@ public:
     next(
         ContainerPtr containerPtr,  
         IndexType & index,
-        RangeType distance
+        RangeType const & distance
     )
     -> RangeType
     {
@@ -237,8 +237,8 @@ public:
         
         // we need the distance from the last element to the current index 
         // position this is a round up
-        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) 
-             / static_cast<RangeType>(jumpsize());
+        return (remainingJumpsize + jumpsize() - static_cast<RangeType>(1)) /
+               jumpsize();
     }
     
     
@@ -278,8 +278,8 @@ public:
 
         // we need the distance from the last element to the current index 
         // position
-        return static_cast<RangeType>(remainingJumpsize + jumpsize() - 1) 
-             / static_cast<RangeType>(jumpsize());
+        return (remainingJumpsize + jumpsize() - static_cast<RangeType>(1)) 
+             / jumpsize();
     }
     
     /**
@@ -326,10 +326,12 @@ public:
         assert(containerPtr != nullptr); // containerptr should be valid
         auto nbElementsVar = nbElements(containerPtr);
         // -1 since we dont like to jump outside
-        auto nbJumps = (nbElementsVar - offset() - 1) / jumpsize();
+        auto nbJumps = (nbElementsVar - offset() - static_cast<RangeType>(1)) 
+                      / jumpsize();
         auto lastPosition = nbJumps * jumpsize() + offset();
         // -1 since we need the last position
-        auto neededJumps = (nbElementsVar - 1) - lastPosition;
+        auto neededJumps = (nbElementsVar - static_cast<RangeType>(1))
+                         - lastPosition;
 
         lastElement(
             containerPtr,
@@ -340,7 +342,7 @@ public:
             containerPtr, 
             index,
             offset(),
-            static_cast<RangeType>(neededJumps),
+            neededJumps,
             containerSize
         );
 
@@ -451,7 +453,7 @@ public:
     auto
     nbElements(ContainerPtr containerPtr)
     const
-    -> RangeType
+    -> uint_fast32_t
     {
         assert(containerPtr != nullptr); // containerptr should be valid
         return containerSize(containerPtr);
@@ -468,7 +470,7 @@ public:
     auto
     size(ContainerPtr containerPtr)
     const
-    -> RangeType
+    -> uint_fast32_t
     {
         assert(containerPtr != nullptr); // containerptr should be valid
         auto const nbElem = nbElements(containerPtr);
@@ -625,23 +627,36 @@ namespace details
 
 
 
-    template<typename T>
+    template<
+        typename T,
+        typename _T= typename std::decay<T>::type,
+        typename TContainerType = typename _T::ContainerType,
+        typename TOffsetType = typename _T::OffsetType,
+        typename TJumpsizeType = typename _T::JumpsizeType,
+        typename TIndexType = typename _T::IndexType,
+        typename TRangeType= typename _T::RangeType,
+        typename TNumberElements= typename _T::NumberElements,
+        typename TFirstElement= typename _T::FirstElement,
+        typename TNextElement= typename _T::NextElement,
+        typename TAfterLastElement= typename _T::AfterLastElement,
+        typename TLastElement= typename _T::LastElement,
+        typename TPreviousElement= typename _T::PreviousElement,
+        typename TBeforeFirstElement= typename _T::BeforeFirstElement
+    >
     struct NavigatorTemplates
     {
-        using _T = typename std::decay<T>::type;
-        using ContainerType = typename _T::ContainerType;
-        using OffsetType = typename _T::OffsetType;
-        using JumpsizeType = typename _T::JumpsizeType;
-        using IndexType = typename _T::IndexType;
-        using RangeType = typename _T::RangeType;
-        using NumberElements = typename _T::NumberElements;
-        using FirstElement = typename _T::FirstElement;
-        using NextElement = typename _T::NextElement;
-        using AfterLastElement = typename _T::AfterLastElement;
-        using LastElement = typename _T::LastElement;
-        using PreviousElement = typename _T::PreviousElement;
-        using BeforeFirstElement = typename _T::BeforeFirstElement;
-        
+        using ContainerType = TContainerType;
+        using OffsetType = TOffsetType;
+        using JumpsizeType = TJumpsizeType;
+        using IndexType = TIndexType ;
+        using RangeType = TRangeType;
+        using NumberElements = TNumberElements;
+        using FirstElement = TFirstElement;
+        using NextElement = TNextElement;
+        using AfterLastElement = TAfterLastElement;
+        using LastElement = TLastElement;
+        using PreviousElement = TPreviousElement;
+        using BeforeFirstElement = TBeforeFirstElement;
     };
 
 
@@ -667,8 +682,9 @@ template<
     typename T_Index = typename pmacc::traits::IndexType<
         T_ContainerNoRef
     >::type,
-    typename T_Range = typename std::decay<
-        typename OffseT_RangeType<T_Offset>::type
+    typename T_Range = typename pmacc::traits::RangeType<
+        T_ContainerNoRef,
+        T_ContainerCategorie
     >::type,
     typename T_FirstElement = typename pmacc::traits::navigator::FirstElement<
         T_ContainerNoRef, 
@@ -705,12 +721,34 @@ template<
     bool isBidirectional = not std::is_same<
         T_LastElement, 
         pmacc::details::UndefinedType
-    >::value
+    >::value,
+     typename = typename std::enable_if< 
+        std::is_same<
+            pmacc::Navigator<
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                T_Offset,
+                T_Jumpsize,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                pmacc::details::UndefinedType,
+                false
+            >,
+            typename std::decay<T_Navigator>::type
+        >::value
+    >::type
+    
 >
 auto
 HDINLINE
 makeNavigator(T_Navigator && navi)
-->
+-> 
 pmacc::Navigator<
     T_ContainerNoRef,
     T_Component,
@@ -727,7 +765,8 @@ pmacc::Navigator<
     T_BeforeFirstElement,
     isBidirectional
 >
-{
+
+{ 
     using ResultType = pmacc::Navigator<
         T_ContainerNoRef,
         T_Component,
@@ -776,14 +815,18 @@ template<
     >::type,
     typename T_ContainerCategorie = typename pmacc::traits::ContainerCategory<
         T_ContainerNoRef
-    >::type,
+    >::type ,
+    
     typename T_ContainerSize = typename pmacc::traits::NumberElements<
         T_ContainerNoRef
     >::type,
     typename T_Index = typename pmacc::traits::IndexType<
         T_ContainerNoRef
     >::type,
-    typename T_Range = decltype(T_Offset::operator()()),
+    typename T_Range = typename pmacc::traits::RangeType<
+        T_ContainerNoRef,
+        T_ContainerCategorie
+    >::type,
     typename T_FirstElement = typename pmacc::traits::navigator::FirstElement<
         T_ContainerNoRef, 
         T_Index, 
@@ -821,6 +864,7 @@ template<
         T_LastElement, 
         pmacc::details::UndefinedType
     >::value
+    
 >
 auto 
 HDINLINE
@@ -845,8 +889,8 @@ makeNavigator(
         T_BeforeFirstElement,
         isBidirectional
     >
-{
 
+{ 
     using ResultType =  pmacc::Navigator<
         T_ContainerNoRef,
         T_Component,
@@ -869,6 +913,7 @@ makeNavigator(
     );
     
     return result;
+    
 }
 
 }// namespace pmacc

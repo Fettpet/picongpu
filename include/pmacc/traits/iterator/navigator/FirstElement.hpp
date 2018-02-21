@@ -48,17 +48,7 @@ template<
     typename T_Index,
     typename T_ContainerCategory
 >
-struct FirstElement
-{
-
-    HDINLINE
-    void
-    operator() (
-        T_Container*, 
-        T_Index&
-    );
-    
-};
+struct FirstElement;
 
 } // namespace navigator
 } // namespace traits

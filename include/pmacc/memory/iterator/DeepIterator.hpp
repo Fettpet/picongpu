@@ -25,6 +25,7 @@
 #include "pmacc/memory/iterator/NoChild.hpp"
 #include "pmacc/memory/iterator/Accessor.hpp"
 #include "pmacc/memory/iterator/Navigator.hpp"
+#include "pmacc/memory/iterator/SliceNavigator.hpp"
 #include <limits>
 #include <cassert>
 #include <type_traits>
@@ -221,7 +222,6 @@ public:
         T_Child_ && child
     ):
         containerPtr(nullptr),
-        index(static_cast<IndexType>(0)),
         childIterator(pmacc::forward<T_Child_>(child)),
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor))
@@ -252,7 +252,6 @@ public:
         details::constructorType::begin
     ):
         containerPtr(container),
-        index(static_cast<IndexType>(0)),
         childIterator(pmacc::forward<T_Child_>(child)),
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor))
@@ -285,7 +284,6 @@ public:
         details::constructorType::rbegin
     ):
         containerPtr(container),
-        index(static_cast<IndexType>(0)),
         childIterator(pmacc::forward<T_Child_>(child)),
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor))
@@ -352,7 +350,6 @@ public:
         details::constructorType::rend
     ):
         containerPtr(container),
-        index(static_cast<IndexType>(0)),
         childIterator(pmacc::forward<T_Child_>(child)),
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor))
@@ -360,7 +357,9 @@ public:
         setToRend(container);
     }
 
-    
+    HDINLINE DeepIterator & operator=(DeepIterator const &) = default;
+    HDINLINE DeepIterator & operator=(DeepIterator &&) = default;
+
     /**
      * @brief grants access to the current elment. This function calls the * 
      * operator of the child iterator. The behavior is undefined, if the 
@@ -581,9 +580,16 @@ public:
          * 3. the remaining jumpsize for the new child
          */
         
+        auto && childNbElements = childIterator.nbElements();
+        if(childNbElements == 0)
+        {
+            setToEnd(containerPtr);
+            return 0;
+        }
+
         auto && remaining = childIterator.gotoNext(jumpsize);
         
-        auto && childNbElements = childIterator.nbElements();
+        
         // the -1 is used, since we jump from an end to the begining of the next cell
         auto && overjump = (remaining - 1 + childNbElements) / childNbElements;
         int childJumps = ((remaining - 1) % childNbElements);
@@ -730,9 +736,15 @@ public:
         /** 
          * For implementation details see gotoNext
          */
-        int && remaining = childIterator.gotoPrevious(jumpsize);
+        auto && childNbElements = childIterator.nbElements();        
+        if(childNbElements == 0)
+        {
+            setToRend(containerPtr);
+            return 0;
+        }
+
+        int && remaining{childIterator.gotoPrevious(jumpsize)};
         
-        auto && childNbElements{childIterator.nbElements()};
         auto && overjump{(remaining + childNbElements - 1) / childNbElements};
         auto && childJumps{((remaining - 1) % childNbElements)};
 
@@ -939,7 +951,11 @@ public:
             )));
             if(not childIterator.isAfterLast())
                 break;
-            gotoNext(1u);
+            navigator.next(
+                containerPtr,
+                index,
+                1u
+            );
         }
     }
     
@@ -1035,7 +1051,11 @@ public:
             ));
             if(not childIterator.isBeforeFirst())
                 break;
-            gotoPrevious(1u);
+            navigator.previous(
+                containerPtr,
+                index,
+                1u
+            );
         }
     }
     
@@ -1226,8 +1246,7 @@ public:
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor)),
         childIterator(),
-        containerPtr(container),
-        index(static_cast<IndexType>(0))
+        containerPtr(container)
     {
         setToBegin(container);
     }
@@ -1262,8 +1281,7 @@ public:
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor)),
         childIterator(),
-        containerPtr(container),
-        index(static_cast<IndexType>(0))
+        containerPtr(container)
     {
         setToRbegin(container);
     }
@@ -1293,8 +1311,7 @@ public:
     ):
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor)),
-        containerPtr(container),
-        index(static_cast<IndexType>(0))
+        containerPtr(container)
     {
         setToEnd(container);
     }
@@ -1324,8 +1341,7 @@ public:
     ):
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor)),
-        containerPtr(container),
-        index(static_cast<IndexType>(0))
+        containerPtr(container)
         
     {
         setToRend(container);
@@ -1350,9 +1366,11 @@ public:
     ):
         navigator(pmacc::forward<T_Navigator_>(navigator)),
         accessor(pmacc::forward<T_Accessor_>(accessor)),
-        containerPtr(nullptr),
-        index(static_cast<IndexType>(0))
+        containerPtr(nullptr)
     {}
+    
+    HDINLINE DeepIterator & operator=(DeepIterator const & ) = default;
+    HDINLINE DeepIterator & operator=(DeepIterator &&) = default;
     
     /**
      * @brief goto the next element. If the iterator is at the before-first-
@@ -1373,7 +1391,8 @@ public:
             navigator.next(
                 containerPtr,
                 index,
-                1u);
+                1u
+            );
         }
         return *this;
     }
@@ -1392,7 +1411,8 @@ public:
         navigator.next(
             containerPtr,
             index,
-            1u);
+            1u
+        );
         return tmp;
     }
     
@@ -1637,7 +1657,8 @@ public:
             containerPtr, 
             index,
             other.containerPtr,
-            other.index);
+            other.index
+        );
     }
     
     /**
@@ -1657,7 +1678,8 @@ public:
             containerPtr,  
             index,
             other.containerPtr,
-            other.index);
+            other.index
+        );
     }
     
     /**
@@ -2045,7 +2067,8 @@ DeepIterator<
     T_IndexType,
         hasConstantSize,
         isBidirectional,
-        isRandomAccessable>
+        isRandomAccessable
+>
 {
     using ContainerType = T_Container;
 
@@ -2115,7 +2138,8 @@ template<
             T_ContainerNoRef,
             T_ContainerCategoryType
         >::value,
-    bool hasConstantSize = traits::HasConstantSize<T_ContainerNoRef>::value>
+    bool hasConstantSize = traits::HasConstantSize<T_ContainerNoRef>::value
+>
 HDINLINE 
 auto
 makeIterator(

@@ -30,7 +30,7 @@
 #include "pmacc/algorithms/math.hpp"
 
 #include <type_traits>
-
+#include "pmacc/random/methods/AlpakaRand.hpp"
 
 namespace pmacc
 {
@@ -59,7 +59,19 @@ namespace detail
 
     //! specialization for MRG32k3aMin
     template<
-        typename T_Acc
+        typename T_Acc,
+        typename W = typename std::enable_if<
+            std::is_same<
+                methods::XorMin< T_Acc >,
+                methods::MRG32k3aMin< T_Acc >
+            >::value
+        >::type,
+        typename T = typename std::enable_if<
+            not std::is_same<
+                methods::XorMin< T_Acc >,
+                methods::MRG32k3aMin< T_Acc >
+            >::value
+        >::type
     >
     struct Normal<
         double,
@@ -73,6 +85,7 @@ namespace detail
     {
 
     };
+
 }  // namespace detail
 }  // namespace distributions
 }  // namespace random

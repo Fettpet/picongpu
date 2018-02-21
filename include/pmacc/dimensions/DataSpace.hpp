@@ -48,7 +48,8 @@ namespace pmacc
          * default constructor.
          * Sets size of all dimensions to 0.
          */
-        HDINLINE DataSpace()
+        HDINLINE
+        DataSpace()
         {
             for (uint32_t i = 0; i < DIM; ++i)
             {
@@ -56,6 +57,17 @@ namespace pmacc
             }
         }
 
+        HDINLINE 
+        DataSpace&
+        operator=(DataSpace const & other)
+        {
+            for (uint32_t i = 0; i < DIM; ++i)
+            {
+                (*this)[i] = other[i];
+            }
+            return *this;
+        }
+        
         /**
          * constructor.
          * Sets size of all dimensions from cuda dim3.

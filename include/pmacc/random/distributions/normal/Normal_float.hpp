@@ -56,7 +56,7 @@ namespace detail
     {
 
     };
-
+#if( PMACC_CUDA_ENABLED != 1 )
     //! specialization for MRG32k3aMin
     template<
         typename T_Acc
@@ -73,6 +73,7 @@ namespace detail
     {
 
     };
+#endif
 }  // namespace detail
 }  // namespace distributions
 }  // namespace random

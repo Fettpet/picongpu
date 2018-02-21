@@ -40,12 +40,12 @@ namespace categorie
 {
 /**
  * A container is supercell like if the following conditions hold
- * 1. The container has two public variables: firstFrame, and lastFrame. The 
- * variables firstFrame and lastFrame are pointers of the index type.
- * 2. The index type has two public variables: nextFrame, previousFrame. Both 
+ * 1. The container has two public variables: firstFramePtr, and lastFramePtr. The 
+ * variables firstFramePtr and lastFramePtr are pointers of the index type.
+ * 2. The index type has two public variables: nextFrame.ptr, previousFrame.ptr. Both 
  * are pointers of other index types. 
- * 3. con->firstFrame->previousFrame == nullptr
- * 4. con->lastFrame->nextFrame == nullptr
+ * 3. con->firstFramePtr->previousFrame.ptr == nullptr
+ * 4. con->lastFramePtr->nextFrame.ptr == nullptr
  * It is possible, that more conditions exists.
  */
 struct SupercellLike;
@@ -140,7 +140,7 @@ struct Ahead<
         TIndex tmp = idx1;
         while(tmp != nullptr)
         {
-            tmp = tmp->previousFrame;
+            tmp = tmp->previousFrame.ptr;
             if(tmp == idx2) 
                 return true;
            
@@ -173,7 +173,7 @@ struct Behind<
         TIndex tmp = idx1;
         while(tmp != nullptr)
         {
-            tmp = tmp->nextFrame;
+            tmp = tmp->nextFrame.ptr;
             if(tmp == idx2) 
                 return true;
             
@@ -204,7 +204,7 @@ struct FirstElement<
     void
     operator() (TContainer* container, TIndex& idx)
     {
-        idx = container->firstFrame;
+        idx = container->firstFramePtr;
     }
 } ;
 /**
@@ -235,7 +235,7 @@ struct NextElement<
         TRange i = 0;
         for(i = 0; i<range; ++i)
         {
-            idx = idx->nextFrame;
+            idx = idx->nextFrame.ptr;
             if(idx == nullptr)
                 break;
         }
@@ -295,7 +295,7 @@ struct LastElement<
         TSizeFunction &&)
     {
 
-        index = containerPtr->lastFrame;
+        index = containerPtr->lastFramePtr;
 
 
     }
@@ -324,19 +324,29 @@ struct PreviousElement<
     operator() (
         TContainer*, 
         TIndex& idx, 
-        TRange const &,
+        TRange const & offset,
         TRange const & jumpsize,
         TContainerSize&)
     {
-        TRange i = 0;
-        for(i = 0; i<jumpsize; ++i)
+        for(TRange i = static_cast<TRange>(0); i<jumpsize; ++i)
         {
-            idx = idx->previousFrame;
+            idx = idx->previousFrame.ptr;
             if(idx == nullptr)
                 return jumpsize - i;
         }
+        // check the offset
+        TIndex buffer = idx;
+        for(TRange i = static_cast<TRange>(0); i<offset; ++i)
+        {
+            buffer = buffer->previousFrame.ptr;
+            if(buffer == nullptr)
+            {
+                idx = nullptr;
+                return offset - i;
+            }
+        }
 
-        return jumpsize - i;
+        return 0;
     }
 } ;
 
@@ -367,7 +377,7 @@ struct BeforeFirstElement<
         { 
             if(tmp == nullptr)
                 return true;
-            tmp = tmp->previousFrame;
+            tmp = tmp->previousFrame.ptr;
         }
         return tmp == nullptr;
     }

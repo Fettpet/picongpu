@@ -266,6 +266,7 @@ template<
     typename T_Container,
     typename T_Prescription,
     typename T_ContainerNoRef = typename std::decay<T_Container>::type,
+    
     typename T_Component = typename traits::ComponentType<
         T_ContainerNoRef
     >::type,
@@ -275,7 +276,6 @@ template<
     typename ContainerCategoryType = typename traits::ContainerCategory<
         T_ContainerNoRef
     >::type,
-
     bool hasConstantSize = traits::HasConstantSize<
         T_ContainerNoRef
     >::value,
@@ -287,6 +287,7 @@ template<
         T_ContainerNoRef, 
         ContainerCategoryType
     >::value
+    
 >
 auto 
 HDINLINE
@@ -310,9 +311,10 @@ makeView(
         hasConstantSize,
         isBidirectional,
         isRandomAccessable>
-{
-
         
+{
+    
+
         using ContainerType = T_ContainerNoRef;
 
         using AccessorType = decltype(
@@ -370,8 +372,9 @@ makeView(
             navigator, 
             child
         );
-
+ 
         return result;
+        
 }
 
 } // namespace pmacc
