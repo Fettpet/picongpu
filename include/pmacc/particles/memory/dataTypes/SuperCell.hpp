@@ -22,14 +22,9 @@
 #pragma once
 
 #include "pmacc/types.hpp"
-#include "pmacc/traits/iterator/Componenttype.hpp"
-#include "pmacc/traits/iterator/HasConstantSize.hpp"
-#include "pmacc/traits/iterator/NumberElements.hpp"
-#include "pmacc/traits/iterator/ContainerCategory.hpp"
-#include "pmacc/traits/iterator/IndexType.hpp"
-#include "pmacc/traits/iterator/RangeType.hpp"
-#include "pmacc/memory/iterator/categorie/SupercellLike.hpp"
-
+#include "deepiterator/traits/Traits.hpp"
+#include "deepiterator/iterator/categorie/SupercellLike.hpp"
+#include "pmacc/particles/memory/dataTypes/FramePointer.hpp"
 namespace pmacc
 {
 
@@ -46,6 +41,16 @@ public:
         sizeLastFrame(0)
     {
     }
+    
+    
+    HDINLINE
+    SuperCell(SuperCell const & ) = default;
+    
+    HDINLINE
+    SuperCell(SuperCell && ) = default;
+    
+    HDINLINE SuperCell& operator=(SuperCell const &) = default;
+    HDINLINE SuperCell& operator=(SuperCell && ) = default;
 
     HDINLINE
     auto
@@ -122,7 +127,11 @@ public:
     PMACC_ALIGN(lastFramePtr, T_Frame*);
 };
 
-namespace traits 
+} // namespace pmacc
+
+namespace hzdr 
+{
+namespace traits
 {
 /** 
 @brief number of frames within a supercell. At the moment, the supercell hasnt a
@@ -133,6 +142,7 @@ template< typename T>
 struct NumberElements<pmacc::SuperCell<T> >
 {
 private:
+    using FramePtr = pmacc::FramePointer<T>;
     typedef pmacc::SuperCell<T> ContainerType;
 public:
 
@@ -143,10 +153,10 @@ public:
     -> uint_fast32_t
     {
         uint_fast32_t result = 0;
-        auto tmp = container->firstFramePtr;
-        while(tmp != nullptr)
+        auto tmp = FramePtr(container->firstFramePtr);
+        while(tmp.isValid())
         {
-            tmp = tmp->previousFrame.ptr;
+            tmp = FramePtr(tmp->nextFrame.ptr);
             ++result;
         }
         return result;
@@ -174,7 +184,7 @@ struct HasConstantSize<pmacc::SuperCell<T> >
 template< typename T_Container>
 struct ContainerCategory<pmacc::SuperCell<T_Container> >
 {
-    typedef pmacc::traits::categorie::SupercellLike type;
+    typedef hzdr::container::categorie::SupercellLike type;
 };
 
 template< typename T>
@@ -183,296 +193,19 @@ struct ComponentType<pmacc::SuperCell<T> >
     typedef T type;
 };
 
-template< typename T>
-struct IndexType<pmacc::SuperCell<T> >
+template< 
+    typename T,
+    typename SFIANE
+>
+struct IndexType<
+    pmacc::SuperCell<T>,
+    SFIANE
+>
 {
-    typedef T* type;
+    using PointerType = pmacc::FramePointer<T>;
+    typedef PointerType type;
 };
 
-#if 0
-namespace navigator
-{
-/**
- * @brief implementation to get the first element within a container. For further
- * details \see FirstElement.hpp
- */
-template<
-    typename T,
-    typename T_Index,
-    typename SFIANE>
-struct FirstElement<
-    pmacc::SuperCell<T>, 
-    T_Index, 
-    SFIANE>
-{
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    HDINLINE
-    void
-    operator() (
-        TContainer* container, 
-        T_Index& idx
-    )
-    {
-        idx = container->FirstFramePtr();
-    }
-    
-} ;
-
-/**
- * @brief Implementation to get the next element. For futher details \see 
- * NExtElement.hpp
- */
-template<
-    typename T,
-    typename T_Index,
-    typename T_Range,
-    typename TContainerCategorie>
-struct NextElement<
-    pmacc::SuperCell<T>,
-    T_Index,
-    T_Range,
-    TContainerCategorie>
-{
-    typedef pmacc::SuperCell<T> TContainer;
-    template<
-        typename TContainerSize>
-    HDINLINE
-    T_Range
-    operator() (
-        TContainer* container, 
-        T_Index& idx, 
-        T_Range const & range,
-        TContainerSize&)
-    {
-        T_Range i = static_cast<T_Range>(0);
-        for(;i < range; ++i)
-        {
-            idx = container->next(idx);
-            if(not idx.isValid())
-                break;
-        }
-        return range - i;
-    }
-    
-} ;
-
-/**
- * @brief Implementation to check whether the end is reached. For further 
- * informations \see AfterLastElement.hpp
- */
-template<
-    typename T,
-    typename T_Index,
-    typename TContainerCategorie
->
-struct AfterLastElement<
-    pmacc::SuperCell<T>, 
-    T_Index, 
-    TContainerCategorie>
-{
-    
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    bool
-    test (TContainer*, T_Index const & idx, TSizeFunction const &)
-    const
-    {
-        return not idx.isValid();
-    }
-    
-    template<typename TSizeFunction, typename TOffset_>
-    HDINLINE
-    void
-    set(TContainer*, T_Index & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        idx.ptr = nullptr;
-    }
-    
-} ;
-
-/**
- * @brief Implementation of the array like last element trait. For further details
- * \see LastElement.hpp
- */
-template<
-    typename T,
-    typename T_Index,
-    typename TContainerCategorie
->
-struct LastElement<
-    pmacc::SuperCell<T>,
-    T_Index,
-    TContainerCategorie
->
-{
-    
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    void
-    operator() (TContainer* conPtr, 
-                T_Index& index, 
-                TSizeFunction& size)
-    {
-        index = conPtr->LastFramePtr();
-    }
-    
-} ;
-
-/**
- * @brief The implementation to get the last element in a array like data
- * structure. For futher details \see PreviousElement.hpp
- */
-template<
-    typename T,
-    typename T_Range,
-    typename TContainerCategorie,
-    typename T_Index
->
-struct PreviousElement<
-    pmacc::SuperCell<T>,
-    T_Index,
-    T_Range,
-    TContainerCategorie
->
-{
-    
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    int
-    operator() (
-        TContainer* container, 
-        T_Index& idx, 
-        T_Range const &,
-        T_Range const & jumpsize,
-        TSizeFunction const & size)
-    {
-        T_Range i = static_cast<T_Range>(0);
-        for(; i<jumpsize; ++i)
-        {
-            idx = container->previous(idx);
-            if(not idx.isValid())
-            {
-                return jumpsize - i;
-            }
-        }
-
-        return static_cast<T_Range>(0);
-    }
-    
-} ;
-
-/**
- * @brief Implmentation to get check whether the iterator is on the element 
- * before the first one. \see BeforeFirstElement.hpp
- */
-template<
-    typename T,
-    typename T_Index,
-    typename TOffset,
-    typename TContainerCategorie
->
-struct BeforeFirstElement<
-    pmacc::SuperCell<T>, 
-    T_Index,
-    TOffset,
-    TContainerCategorie>
-{
-    
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    template<typename TSizeFunction, typename TOffset_>
-    HDINLINE
-    bool
-    test (TContainer*, T_Index const & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        return not idx.isValid();
-    }
-    
-    template<typename TSizeFunction, typename TOffset_>
-    HDINLINE
-    void
-    set(TContainer*, T_Index & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        idx.ptr = nullptr;
-    }
-}; // struct BeforeFirstElement
-    
-} // namespace navigator
-
-namespace accessor
-{
-
-/**
- * @brief get the value of the element, at the iterator positions. \see Get.hpp
- */
-template<
-    typename T,
-    typename T_Acc,
-    typename T_Component,
-    typename TContainerCategorie,
-    typename T_Index
->
-struct Get<
-    pmacc::SuperCell<T>,
-    T_Component, 
-    T_Index, 
-    TContainerCategorie
-    >
-{
-    typedef pmacc::SuperCell<T> TContainer;
-    
-    HDINLINE
-    T_Component&
-    operator() (TContainer*, T_Index& idx)
-    {
-        return *idx;
-    }
-};    
-
-/**
- * @brief check if both iterators are at the same element. \see Equal.hpp
- */
-template<
-    typename T,
-    typename T_Component,
-    typename TContainerCategorie,
-    typename T_Index
->
-struct Equal<
-    pmacc::SuperCell<T>,
-    T_Component, 
-    T_Index, 
-    TContainerCategorie
->
-{
-    typedef pmacc::SuperCell<T> TContainer;
-    HDINLINE
-    bool
-    operator() (
-        TContainer* con1, 
-        T_Index& idx1, 
-        TContainer* con2, 
-        T_Index& idx2
-    )
-    {
-        return con1 == con2 && idx1 == idx2;
-    }
-};
-
-
-} // namespace accessor
-
-#endif
 }//namespace traits
 
-} //end namespace pmacc
+}// namespace hzdr

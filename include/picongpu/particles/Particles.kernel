@@ -51,27 +51,21 @@
 #include <pmacc/mappings/threads/WorkerCfg.hpp>
 
 
-
-#include <pmacc/traits/iterator/Componenttype.hpp>
-#include <pmacc/traits/iterator/IndexType.hpp>
-#include <pmacc/traits/iterator/IsBidirectional.hpp>
-#include <pmacc/traits/iterator/IsRandomAccessable.hpp>
-#include <pmacc/memory/iterator/IdentityValue.hpp>
-
-#include <pmacc/memory/iterator/Prescription.hpp>
-#include <pmacc/memory/iterator/View.hpp>
-
+#include "deepiterator/DeepIterator.hpp"
+#include "deepiterator/traits/Traits.hpp"
+#include "deepiterator/definitions/SelfValue.hpp"
 namespace picongpu
 {
-
-template<unsigned simDim>
+template<
+    unsigned simDim
+>
 struct RangeTypeSupercell;
 
 template<>
 struct RangeTypeSupercell<3u> : public DataSpace<3u> 
 {
     using BaseType = DataSpace<3u> ;
-    
+    static DataSpace<3u> supercellSize;
     
     HDINLINE RangeTypeSupercell() = default;
     HDINLINE RangeTypeSupercell(RangeTypeSupercell const &) = default;
@@ -86,14 +80,24 @@ struct RangeTypeSupercell<3u> : public DataSpace<3u>
         BaseType(value)
     {}
     
-    HDINLINE RangeTypeSupercell& operator=(RangeTypeSupercell const &) = default;
-    
-    HDINLINE operator int()
+    HDINLINE 
+    RangeTypeSupercell& 
+    operator=(RangeTypeSupercell const & other)
     {
-        auto supercellSize = SuperCellSize::toRT();
-        return (*this)[0] * supercellSize[1] * supercellSize[2] 
-            +  (*this)[1] * supercellSize[2] 
-            +  (*this)[2];
+        (*this)[0] = other[0];
+        (*this)[1] = other[1];
+        (*this)[2] = other[2];
+
+        return *this;
+    }
+    
+    HDINLINE 
+    explicit
+    operator int()
+    {
+        return (*this)[0] 
+            +  (*this)[1] * supercellSize[0] 
+            +  (*this)[2]* supercellSize[1] * supercellSize[0] ;
     }
     
     HDINLINE RangeTypeSupercell& operator+=(RangeTypeSupercell const & other)
@@ -105,7 +109,10 @@ struct RangeTypeSupercell<3u> : public DataSpace<3u>
         return *this;
     }
 };
-    
+
+DataSpace<3u> RangeTypeSupercell<3u>::supercellSize = DataSpace<3u>(0,0,0);
+
+
 template<
     typename T_Acc,
     typename T_ParticleBox,
@@ -118,6 +125,7 @@ public:
 protected:
     const T_Acc & acc;
     T_ParticleBox pb;
+    RangeTypeSupercell<simDim> _dim;
 public:
     using Supercell = typename std::decay<
         decltype(pb.getSuperCell( DataSpace<simDim>()))
@@ -128,10 +136,12 @@ public:
     HDINLINE
     SupercellContainer(
         T_ParticleBox pb,
-        _T_Acc && acc
+        _T_Acc && acc,
+        RangeTypeSupercell<simDim> const & _dim
     ):
         acc(pmacc::iterator::forward<_T_Acc>(acc)),
-        pb(pb)
+        pb(pb),
+        _dim(_dim)
     {}
     
     HDINLINE
@@ -143,6 +153,23 @@ public:
         return pb.getSuperCell( block );
     }
     
+    HDINLINE 
+    RangeTypeSupercell<simDim>&
+    dim()
+    {
+        return _dim;
+    }
+    
+    
+    HDINLINE 
+    const
+    RangeTypeSupercell<simDim>&
+    dim()
+    const
+    {
+        return _dim;
+    }
+    
 }; // struct Supercell Wrapper 
 
 }// namespace picongpu
@@ -150,7 +177,7 @@ public:
  
 
 
-namespace pmacc
+namespace hzdr
 {
 namespace traits
 {
@@ -173,14 +200,14 @@ struct NumberElements<picongpu::SupercellContainer<
     
     HDINLINE
     int_fast32_t 
-    operator()(Container*)
+    operator()(Container* container)
     const
     {
-        auto supercellSize = picongpu::SuperCellSize::toRT();
-        int_fast32_t result = 0;
+        auto supercellSize = container->dim();
+        int_fast32_t result = 1;
         for(int i=0; i<simDim; ++i)
         {
-            result += supercellSize[i];
+            result *= supercellSize[i];
         }
         return result;
     }
@@ -209,14 +236,15 @@ struct ComponentType<picongpu::SupercellContainer<
 template<
     typename T_Acc,
     typename T_ParticleBox,
-    uint_fast32_t simDim
+    uint_fast32_t simDim,
+    typename SFIANE
 >
 struct IndexType<picongpu::SupercellContainer<
         T_Acc,
         T_ParticleBox,
         simDim
     >,
-    void
+    SFIANE
 >
 {
     using type = picongpu::RangeTypeSupercell< simDim > ; 
@@ -236,437 +264,45 @@ struct RangeType<picongpu::SupercellContainer<
     SFIANE
 >
 {
-    typedef picongpu::RangeTypeSupercell< simDim > type; 
+    typedef int type; 
 };
 
 template<
     typename T_Acc,
     typename T_ParticleBox,
-    uint_fast32_t simDim,
-    typename TCategorie
+    uint_fast32_t simDim
 >
-struct IsBidirectional<picongpu::SupercellContainer<
+struct HasConstantSize<picongpu::SupercellContainer<
         T_Acc,
         T_ParticleBox,
         simDim
-    >,
-    TCategorie
+    >
 >
 {
-    const static bool value = true;
+    static const bool value=true;
 };
 
 template<
     typename T_Acc,
     typename T_ParticleBox,
-    uint_fast32_t simDim,
-    typename TCategorie>
-struct IsRandomAccessable<picongpu::SupercellContainer<
+    uint_fast32_t simDim
+>
+struct ContainerCategory<picongpu::SupercellContainer<
         T_Acc,
         T_ParticleBox,
         simDim
-    >,
-    TCategorie
+    >
 >
 {
-    const static bool value = false;
+    using type = hzdr::container::categorie::ArrayNDLike< simDim>;
 };
 
-namespace navigator
-{
-/**
- * @brief implementation to get the first element within a container. For further
- * details \see FirstElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Index,
-    typename T_ParticleBox,
-    uint_fast32_t simDim,
-    typename SFIANE
->
-struct FirstElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    T_Index, 
-    SFIANE>
-{
-    using TContainer= picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >;
     
-    HDINLINE
-    void
-    operator() (
-        TContainer* container, 
-        T_Index& idx
-    )
-    {
-        idx = picongpu::RangeTypeSupercell< simDim >(
-            0,
-            0,
-            0
-        );
-    }
-    
-} ;
-
-/**
- * @brief Implementation to get the next element. For futher details \see 
- * NExtElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Index,
-    typename T_Range,
-    typename TContainerCategorie,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct NextElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    T_Index,
-    T_Range,
-    TContainerCategorie>
-{
-    using TContainer = picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > ;
-    
-    template<
-        typename TContainerSize>
-    HDINLINE
-    uint_fast32_t
-    operator() (
-        TContainer* container, 
-        T_Index& idx, 
-        uint_fast32_t const & range,
-        TContainerSize&)
-    {
-        idx[0] += range;
-        // std::max(0, idx[0] - blockDim.x)
-        auto supercellSize = picongpu::SuperCellSize::toRT();
-        return (static_cast<int>(idx[0]) - static_cast<int>(supercellSize[0]) >= 0)
-                *(static_cast<int>(idx[0]) - static_cast<int>(supercellSize[0]));
-    }
-    
-    template<
-        typename TContainerSize>
-    HDINLINE
-    uint_fast32_t
-    operator() (
-        TContainer* container, 
-        T_Index& idx, 
-        picongpu::RangeTypeSupercell< simDim > const & range,
-        TContainerSize&)
-    {
-        idx += range;
-        return 0;
-    }
-    
-} ;
-
-/**
- * @brief Implementation to check whether the end is reached. For further 
- * informations \see AfterLastElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Index,
-    typename TContainerCategorie,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct AfterLastElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >, 
-    T_Index, 
-    TContainerCategorie>
-{
-    
-    typedef picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    bool
-    test (TContainer*, T_Index const & idx, TSizeFunction const &)
-    const
-    {
-        auto supercellSize = picongpu::SuperCellSize::toRT();
-        for(auto i=0u; i<simDim; ++i)
-            if(idx[i] >= supercellSize[i])
-                return true;
-        return false;
-    }
-    
-    template<
-        typename TSizeFunction, 
-        typename TOffset_
-    >
-    HDINLINE
-    void
-    set(TContainer*, T_Index & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        auto supercellSize = picongpu::SuperCellSize::toRT();
-        idx = T_Index(supercellSize);
-    }
-    
-} ;
-
-/**
- * @brief Implementation of the array like last element trait. For further details
- * \see LastElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Index,
-    typename TContainerCategorie,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct LastElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    T_Index,
-    TContainerCategorie
->
-{
-    using TContainer = picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    void
-    operator() (
-        TContainer* conPtr, 
-        T_Index& index, 
-        TSizeFunction& size
-    )
-    {
-        auto supercellSize = picongpu::SuperCellSize::toRT();
-        index = T_Index(supercellSize);
-        index[simDim -1] -= 1;
-    }
-    
-} ;
-
-/**
- * @brief The implementation to get the last element in a array like data
- * structure. For futher details \see PreviousElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Range,
-    typename TContainerCategorie,
-    typename T_Index,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct PreviousElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    T_Index,
-    T_Range,
-    TContainerCategorie
->
-{
-    
-    using T_Container = picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > ;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    int
-    operator() (
-        T_Container* container, 
-        T_Index& idx, 
-        T_Range const &,
-        T_Range const & jumpsize,
-        TSizeFunction const & size
-    )
-    {
-        idx -= jumpsize;
-
-        return 0;
-    }
-    
-} ;
-
-/**
- * @brief Implmentation to get check whether the iterator is on the element 
- * before the first one. \see BeforeFirstElement.hpp
- */
-template<
-    typename T_Acc,
-    typename T_Index,
-    typename TOffset,
-    typename TContainerCategorie,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct BeforeFirstElement<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >, 
-    T_Index,
-    TOffset,
-    TContainerCategorie>
-{
-    
-    typedef picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > TContainer;
-    
-    template<
-        typename TSizeFunction, 
-        typename TOffset_
-    >
-    HDINLINE
-    bool
-    test (TContainer*, T_Index const & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        for(uint i=0; i<simDim; ++i)
-        {
-            if(idx[i] < 0)
-                return true;
-        }
-        return false;
-    }
-    
-    template<
-        typename TSizeFunction, 
-        typename TOffset_
-    >
-    HDINLINE
-    void
-    set(TContainer*, T_Index & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        idx[0] = -1;
-    }
-}; // struct BeforeFirstElement
-    
-} // namespace navigator
-
-namespace accessor
-{
-
-/**
- * @brief get the value of the element, at the iterator positions. \see Get.hpp
- */
-template<
-    typename T_Acc,
-    typename TComponent,
-    typename TContainerCategorie,
-    typename T_Index,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct Get<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    TComponent, 
-    T_Index, 
-    TContainerCategorie
-    >
-{
-    typedef picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > TContainer;
-    
-    HDINLINE
-    TComponent&
-    operator() (
-        TContainer* con, 
-        T_Index& idx
-    )
-    {
-        return (*con)[idx];
-    }
-};    
-
-/**
- * @brief check if both iterators are at the same element. \see Equal.hpp
- */
-template<
-    typename T_Acc,
-    typename TComponent,
-    typename TContainerCategorie,
-    typename T_Index,
-    typename T_ParticleBox,
-    uint_fast32_t simDim
->
-struct Equal<
-    picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    >,
-    TComponent, 
-    T_Index, 
-    TContainerCategorie
-    >
-{
-    typedef picongpu::SupercellContainer<
-        T_Acc,
-        T_ParticleBox,
-        simDim
-    > TContainer;
-    HDINLINE
-    bool
-    operator() (TContainer* con1, T_Index& idx1, TContainer* con2, T_Index& idx2)
-    {
-        return con1 == con2 && idx1 == idx2;
-    }
-};
-}//namespace accessor
 }// namespace traits
-} //namepsace pmacc 
+
+} //namepsace hzdr 
 
     
-
-
 
 namespace picongpu
 {
@@ -1053,7 +689,7 @@ struct KernelMoveAndMarkParticles
             T_ParBox,
             simDim
         >;
-        using OffsetSupercell = pmacc::IdentityValue<RangeTypeSupercell < simDim > >;
+        using OffsetSupercell = hzdr::SelfValue<RangeTypeSupercell < simDim > >;
         
         using namespace mappings::threads;
 
@@ -1080,40 +716,39 @@ struct KernelMoveAndMarkParticles
         >;
         
         // We go over all frames -> Within the particles is the parallization
-        typedef pmacc::IdentityValue<uint_fast32_t, 0> Offset;
-        typedef pmacc::IdentityValue<uint_fast32_t, 1> Jumpsize;
+        typedef hzdr::SelfValue<uint_fast32_t, 0> Offset;
+        typedef hzdr::SelfValue<uint_fast32_t, 1> Jumpsize;
 
-        
+        RangeTypeSupercell < simDim >::supercellSize = mapper.getGridSuperCells();
         auto supercellContainer = SupercellWrapper(
             pb,
-            acc
+            acc,
+            RangeTypeSupercell<3>(mapper.getGridSuperCells())
         );
         
-        auto && receptionFrame = pmacc::makeIteratorPrescription(
-            pmacc::makeAccessor(),
-            pmacc::makeNavigator(
+        auto && receptionFrame = hzdr::makeIteratorPrescription(
+            hzdr::makeAccessor(),
+            hzdr::makeNavigator(
                 Offset(),
                 Jumpsize()
             )
         );
         
-        auto && receptionSupercell = pmacc::makeIteratorPrescription(
-            pmacc::makeAccessor(),
-            pmacc::makeNavigator(
+        auto && receptionSupercell = hzdr::makeIteratorPrescription(
+            hzdr::makeAccessor(),
+            hzdr::makeNavigator(
                 OffsetSupercell(block),
-                Jumpsize()
+                Jumpsize(),
+                hzdr::Slice<hzdr::slice::Distance, 0>()
             ),
             receptionFrame
         );
 
         
-         auto && view = pmacc::makeView(
+         auto && view = hzdr::makeView(
              supercellContainer,
              receptionSupercell
          );
-
-         auto && it=view.rbegin();
-            
 
         PMACC_SMEM(
             acc,
@@ -1122,7 +757,7 @@ struct KernelMoveAndMarkParticles
         );
 
         // current processed frame
-//         FramePtr frame;
+//        FramePtr frame;
         lcellId_t particlesInSuperCell;
         uint32_t const workerIdx = threadIdx.x;
         ForEachIdx<
@@ -1159,14 +794,13 @@ struct KernelMoveAndMarkParticles
             acc,
             T_DataDomain( )
         );
-
+        auto && it=view.rbegin();
         __syncthreads();
 
         // end kernel if we have no frames
-        
         if( it == view.rend() )
            return;
-// std::cout << std::boolalpha << (it.getIndex().ptr == nullptr) << " " << (it != view.rend()) << std::endl;
+        
         nvidia::functors::Assign assign;
         ThreadCollective<
             T_DataDomain,
@@ -1190,16 +824,15 @@ struct KernelMoveAndMarkParticles
         );
 
         __syncthreads();
-        
-        int counter = 0;
+
+         int counter = 0;
         // move over frames and call frame solver
         for(;it != view.rend(); --it)
         {
-#if 0
-//             std::cout << counter << std::endl;
-             ++counter;
-            if(counter == 1)
-                break;
+
+//              std::cout << it << std::endl;
+              ++counter;
+
             // loop over all particles in the frame
             ForEachIdx< ParticleDomCfg >{ workerIdx }
             (
@@ -1225,8 +858,8 @@ struct KernelMoveAndMarkParticles
             // independent for each worker
 //             frame = pb.getPreviousFrame( frame );
             particlesInSuperCell = frameSize;
-#endif
         }
+//         std::cout << "counter " << counter << std::endl;
 //              if(counter == 1)
 //              {
 //                  printf("break with counter\n");
@@ -1255,7 +888,7 @@ struct KernelMoveAndMarkParticles
                 }
             }
         );
-
+// #endif
         
     } // operator()
 

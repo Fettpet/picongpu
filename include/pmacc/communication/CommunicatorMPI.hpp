@@ -33,6 +33,7 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <sstream>
 
 namespace pmacc
 {
@@ -131,7 +132,11 @@ public:
 
         if (numberProcesses.productOfComponents() != mpiSize)
         {
-            throw std::invalid_argument("wrong parameters or wrong mpirun-call!");
+            std::stringstream str;
+            str << "wrong parameters or wrong mpirun-call!"
+             << " We need " << numberProcesses.productOfComponents() << " processes " 
+             << " and got " << mpiSize << std::endl;
+            throw std::invalid_argument(str.str().c_str());
         }
 
         //1. create Communicator (computing_comm) of computing nodes (ranks 0...n)

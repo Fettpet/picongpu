@@ -48,12 +48,9 @@
 
 #include "pmacc/particles/ParticleDescription.hpp"
 
-#include "pmacc/traits/iterator/Componenttype.hpp"
-#include "pmacc/traits/iterator/HasConstantSize.hpp"
-#include "pmacc/traits/iterator/NumberElements.hpp"
-#include "pmacc/traits/iterator/ContainerCategory.hpp"
-#include "pmacc/memory/iterator/categorie/ArrayLike.hpp"
-
+#include "deepiterator/DeepIterator.hpp"
+#include "deepiterator/traits/Traits.hpp"
+#include "deepiterator/iterator/Categorie.hpp"
 namespace pmacc
 {
 
@@ -219,74 +216,9 @@ struct Frame :
 
 }; // struct frame
 
+
 namespace traits
 {
-
-/**
-@brief number of elements within a frame
-@todo Here we need to specify the number of particles in frames
-*/
-template<
-    typename T_CreatePairOperator,
-    typename T_ParticleDescription
->
-struct NumberElements<pmacc::Frame<
-    T_CreatePairOperator,
-    T_ParticleDescription
-> >
-{
-    using ContainerType = pmacc::Frame<
-        T_CreatePairOperator,
-        T_ParticleDescription
-    >;
-
-
-    HDINLINE
-    auto
-    operator()(ContainerType*)
-    -> uint_fast32_t
-    {
-        return 256;
-    }
-};
-
-template<
-    typename T_CreatePairOperator,
-    typename T_ParticleDescription
->
-struct HasConstantSize<pmacc::Frame<
-    T_CreatePairOperator,
-    T_ParticleDescription
-> >
-{
-    const static bool value = true;
-};
-
-template<
-    typename T_CreatePairOperator,
-    typename T_ParticleDescription
->
-struct ContainerCategory<pmacc::Frame<
-    T_CreatePairOperator,
-    T_ParticleDescription
-> >
-{
-    typedef pmacc::container::categorie::ArrayLike type;
-};
-
-template<
-    typename T_CreatePairOperator,
-    typename T_ParticleDescription
->
-struct ComponentType<pmacc::Frame<
-    T_CreatePairOperator,
-    T_ParticleDescription
-> >
-{
-    using FrameType =pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>;
-    using type = typename FrameType::ParticleType;
-};
-
 template<
     typename T_IdentifierName,
     typename T_CreatePairOperator,
@@ -375,6 +307,78 @@ public:
     using type = typename GetKeyFromAlias<FlagList, T_IdentifierName>::type;
 };
 
-} //namespace traits
-
+} //naemspace traits
 }//namespace pmacc
+
+namespace hzdr 
+{
+namespace traits
+{
+
+/**
+@brief number of elements within a frame
+@todo Here we need to specify the number of particles in frames
+*/
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct NumberElements<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
+{
+    using ContainerType = pmacc::Frame<
+        T_CreatePairOperator,
+        T_ParticleDescription
+    >;
+
+
+    HDINLINE
+    auto
+    operator()(ContainerType*)
+    -> uint_fast32_t
+    {
+        return 256;
+    }
+};
+
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct HasConstantSize<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
+{
+    const static bool value = true;
+};
+
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct ContainerCategory<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
+{
+    typedef hzdr::container::categorie::ArrayLike type;
+};
+
+template<
+    typename T_CreatePairOperator,
+    typename T_ParticleDescription
+>
+struct ComponentType<pmacc::Frame<
+    T_CreatePairOperator,
+    T_ParticleDescription
+> >
+{
+    using FrameType =pmacc::Frame<T_CreatePairOperator, T_ParticleDescription>;
+    using type = typename FrameType::ParticleType;
+};
+}//namespace traits
+} //namespace hzdr 
+    

@@ -111,6 +111,13 @@ if(OPENMP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+################################################################################
+# Find DeepIterator
+################################################################################
+#set(DeepIterator_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../thirdParty/deepiterator/")
+find_package(DeepIterator REQUIRED CONFIG PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../../thirdParty/deepiterator/")
+include_directories(SYSTEM ${DeepIterator_INCLUDE_DIRS})
+Message(STATUS "Include directories: ${INCLUDE_DIRECTORIES}")
 
 ################################################################################
 # Find mallocMC

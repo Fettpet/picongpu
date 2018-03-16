@@ -63,19 +63,7 @@ namespace detail
 
     //! specialization for MRG32k3aMin
     template<
-        typename T_Acc,
-        typename W = typename std::enable_if<
-            std::is_same<
-                methods::XorMin< T_Acc >,
-                methods::MRG32k3aMin< T_Acc >
-            >::value
-        >::type,
-        typename T = typename std::enable_if<
-            not std::is_same<
-                methods::XorMin< T_Acc >,
-                methods::MRG32k3aMin< T_Acc >
-            >::value
-        >::type
+        typename T_Acc
     >
     struct Normal<
         double,

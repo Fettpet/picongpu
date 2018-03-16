@@ -749,12 +749,14 @@ private:
         {
             // global size must be a devisor of supercell size
             // note: this is redundant, while using the local condition below
+            std::cout << "global grid size: " << globalGridSize[i] << " Supercell " << MappingDesc::SuperCellSize::toRT()[i] << std::endl;
             PMACC_VERIFY(globalGridSize[i] % MappingDesc::SuperCellSize::toRT()[i] == 0);
             // local size must be a devisor of supercell size
             PMACC_VERIFY(gridSizeLocal[i] % MappingDesc::SuperCellSize::toRT()[i] == 0);
             // local size must be at least 3 supercells (1x core + 2x border)
             // note: size of border = guard_size (in supercells)
             // \todo we have to add the guard_x/y/z for modified supercells here
+            std::cout << "local grid size: " << gridSizeLocal[i] << " Supercell " << MappingDesc::SuperCellSize::toRT()[i] << " guard " << GUARD_SIZE << std::endl;
             PMACC_VERIFY((uint32_t) gridSizeLocal[i] / MappingDesc::SuperCellSize::toRT()[i] >= 3 * GUARD_SIZE);
         }
     }

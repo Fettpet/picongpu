@@ -19,7 +19,7 @@
  */
 
 #pragma once
-
+#include <iostream>
 #include "pmacc/types.hpp"
 #include "pmacc/particles/memory/dataTypes/Pointer.hpp"
 #include "pmacc/traits/GetEmptyDefaultConstructibleType.hpp"
@@ -111,3 +111,12 @@ struct GetEmptyDefaultConstructibleType<FramePointer<T_Type, T_InitMethod> >
 } //namespace traits
 
 } //namespace pmacc
+template <
+    typename T_Type, 
+    typename T_InitMethod
+>
+std::ostream& operator<<(std::ostream & out, pmacc::FramePointer<T_Type, T_InitMethod> const & frame)
+{
+    out << frame.ptr;
+    return out;
+}

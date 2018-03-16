@@ -38,126 +38,175 @@
 #include "pmacc/memory/shared/Allocate.hpp"
 #include "pmacc/memory/Array.hpp"
 
-#include <pmacc/traits/iterator/Componenttype.hpp>
-#include <pmacc/traits/iterator/IndexType.hpp>
-#include <pmacc/traits/iterator/IsBidirectional.hpp>
-#include <pmacc/traits/iterator/IsRandomAccessable.hpp>
-#include <pmacc/memory/iterator/IdentityValue.hpp>
-
-#include <pmacc/memory/iterator/Prescription.hpp>
-#include <pmacc/memory/iterator/View.hpp>
+#include "deepiterator/DeepIterator.hpp"
+#include "deepiterator/traits/Traits.hpp"
+#include "cupla/datatypes/uint.hpp"
 
 namespace pmacc
 {
-    
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    unsigned simDim>
-struct FrameWrapper
+    unsigned simDim
+>
+struct RangeTypeSupercell;
+
+template<>
+struct RangeTypeSupercell<3u> : public DataSpace<3u> 
 {
-protected:
-    TAcc const & acc;
-    TParticleBox pb;
-    TMapper mapper;
-    DataSpace< simDim > const block;
+    using BaseType = DataSpace<3u> ;
+    static DataSpace<3u> supercellSize;
     
+    HDINLINE RangeTypeSupercell() = default;
+    HDINLINE RangeTypeSupercell(RangeTypeSupercell const &) = default;
+    HDINLINE RangeTypeSupercell(RangeTypeSupercell &&) = default;
+    
+    HDINLINE RangeTypeSupercell(int_fast32_t const & x):
+            BaseType(x, 0, 0)
+        {}
+    
+        
+    HDINLINE RangeTypeSupercell(BaseType value) : 
+        BaseType(value)
+    {}
+    
+
+    HDINLINE RangeTypeSupercell(uint3 other)
+    {
+        (*this)[0] = other.x;
+        (*this)[1] = other.y;
+        (*this)[2] = other.z;
+    }
+    
+    HDINLINE RangeTypeSupercell& operator=(RangeTypeSupercell const &) = default;
+    HDINLINE RangeTypeSupercell& operator=(RangeTypeSupercell &&) = default;
+
+    HDINLINE 
+    RangeTypeSupercell& 
+    operator=(uint3 const & other)
+    {
+        (*this)[0] = other.x;
+        (*this)[1] = other.y;
+        (*this)[2] = other.z;
+
+        return *this;
+    }
+    
+    HDINLINE 
+    explicit
+    operator int()
+    {
+        return (*this)[0] 
+            +  (*this)[1] * supercellSize[0] 
+            +  (*this)[2] * supercellSize[1] * supercellSize[0] ;
+    }
+    
+    HDINLINE RangeTypeSupercell& operator+=(RangeTypeSupercell const & other)
+    {
+        for(auto i=0u; i<3u; ++i)
+        {
+            (*this)[i] += other[i];
+        }
+        return *this;
+    }
+};
+
+DataSpace<3u> RangeTypeSupercell<3u>::supercellSize = DataSpace<3u>(0,0,0);
+
+
+template<
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim
+>
+struct SupercellContainer
+{
 public:
-    using FramePtr = typename TParticleBox::FramePtr;
+    
+protected:
+    const T_Acc & acc;
+    T_ParticleBox pb;
+    RangeTypeSupercell<simDim> _dim;
+public:
+    using Supercell = typename std::decay<
+        decltype(pb.getSuperCell( DataSpace<simDim>()))
+    >::type;
     template<
-        typename T_ACC,
-        typename T_ParticleBox,
-        typename T_Mapper>
+        typename _T_Acc
+    >
     HDINLINE
-    FrameWrapper(
-        T_ACC && acc, 
-        T_ParticleBox && pb, 
-        T_Mapper && mapper
+    SupercellContainer(
+        T_ParticleBox pb,
+        _T_Acc && acc,
+        RangeTypeSupercell<simDim> const & _dim
     ):
-        acc(pmacc::iterator::forward<T_ACC>(acc)),
-        pb(pmacc::iterator::forward<T_ParticleBox>(pb)),
-        mapper(pmacc::iterator::forward<T_Mapper>(mapper)),
-        block(
-            mapper.getSuperCellIndex( 
-                DataSpace< simDim >( blockIdx ) 
-            )
-        )
+        acc(pmacc::iterator::forward<_T_Acc>(acc)),
+        pb(pb),
+        _dim(_dim)
     {}
     
     HDINLINE
-    FramePtr
-    first()
+    Supercell&
+    operator[](
+        RangeTypeSupercell<simDim> & block 
+    )
     {
-        return pb.getFirstFrame(block);
+        return pb.getSuperCell( block );
     }
     
-    HDINLINE
-    FramePtr
-    last()
+    HDINLINE 
+    RangeTypeSupercell<simDim>&
+    dim()
     {
-        return pb.getLastFrame(block);
+        return _dim;
     }
     
-    HDINLINE
-    FramePtr
-    next(FramePtr ptr)
+    
+    HDINLINE 
+    const
+    RangeTypeSupercell<simDim>&
+    dim()
+    const
     {
-        return pb.getNextFrame(ptr);
+        return _dim;
     }
     
-    HDINLINE
-    FramePtr 
-    previous(FramePtr ptr)
-    {
-        return pb.getPreviousFrame(ptr);
-    }
-    
-    HDINLINE
-    bool 
-    valid(FramePtr ptr)
-    {
-        return ptr.isValid();
-    }
-    
+}; // struct Supercell Wrapper 
 
-}; // struct FrameWrapper
-
-} // namespace pmacc
-/**
- * All needed traits are created to use the particlebox as container
- */
+}// namespace pmacc
+ 
+ 
 
 
-namespace pmacc
+namespace hzdr
 {
 namespace traits
 {
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    unsigned simDim>
-struct NumberElements<pmacc::FrameWrapper<
-    TParticleBox, 
-    TMapper, 
-    TAcc,
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim
+    >
+struct NumberElements<pmacc::SupercellContainer<
+    T_Acc,
+    T_ParticleBox,
     simDim
 > >
 {
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> Container;
+    using Container = pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
+        simDim
+    > ;
     
     HDINLINE
     int_fast32_t 
     operator()(Container* container)
     const
     {
-        auto result = 0;
-        auto tmp = container->first();
-        while(container->valid(tmp))
+        auto supercellSize = container->dim();
+        int_fast32_t result = 1;
+        for(int i=0; i<simDim; ++i)
         {
-            tmp = container->next(tmp);
-            ++result;
+            result *= supercellSize[i];
         }
         return result;
     }
@@ -166,396 +215,91 @@ struct NumberElements<pmacc::FrameWrapper<
     
 /// @brief This is the trait for the componenttype of the particle box
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    unsigned simDim>
-struct ComponentType<pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> >
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim>
+struct ComponentType<pmacc::SupercellContainer<
+    T_Acc,
+    T_ParticleBox,
+    simDim
+> >
 {
-    
-    typedef typename TParticleBox::FramePtr::type type;
+    using container = pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
+        simDim
+    >;
+    using type = typename container::Supercell;
 };
 
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    unsigned simDim>
-struct IndexType<pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, void>
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim,
+    typename SFIANE
+>
+struct IndexType<pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
+        simDim
+    >,
+    SFIANE
+>
 {
-    typedef typename TParticleBox::FramePtr type; 
+    using type = pmacc::RangeTypeSupercell< simDim > ; 
 };
 
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    unsigned simDim>
-struct RangeType<pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, void>
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim,
+    typename SFIANE
+>
+struct RangeType<pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
+        simDim
+    >,
+    SFIANE
+>
 {
     typedef int type; 
 };
 
 template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    typename TCategorie,
-    unsigned simDim>
-struct IsBidirectional<pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, TCategorie>
-{
-    const static bool value = true;
-};
-
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    typename TCategorie,
-    unsigned simDim>
-struct IsRandomAccessable<pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, TCategorie>
-{
-    const static bool value = false;
-};
-
-namespace navigator
-{
-/**
- * @brief implementation to get the first element within a container. For further
- * details \see FirstElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TIndex,
-    typename TAcc,
-    unsigned simDim,
-    typename SFINAE>
-struct FirstElement<
-    pmacc::FrameWrapper<
-        TParticleBox, 
-        TMapper, 
-        TAcc, 
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim
+>
+struct HasConstantSize<pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
         simDim
-    >, 
-    TIndex, 
-    SFINAE>
-{
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    
-    HDINLINE
-    void
-    operator() (TContainer* container, TIndex& idx)
-    {
-        idx = container->first();
-    }
-    
-} ;
-
-/**
- * @brief Implementation to get the next element. For futher details \see 
- * NExtElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TIndex,
-    typename TRange,
-    typename TAcc,
-    typename TContainerCategorie,
-    unsigned simDim>
-struct NextElement<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-    TIndex,
-    TRange,
-    TContainerCategorie>
-{
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    template<
-        typename TContainerSize>
-    HDINLINE
-    TRange
-    operator() (
-        TContainer* container, 
-        TIndex& idx, 
-        TRange const & range,
-        TContainerSize&)
-    {
-        TRange i = static_cast<TRange>(0);
-        for(;i < range; ++i)
-        {
-            idx = container->next(idx);
-            if(not idx.isValid())
-                break;
-        }
-        return range - i;
-    }
-    
-} ;
-
-/**
- * @brief Implementation to check whether the end is reached. For further 
- * informations \see AfterLastElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TIndex,
-    typename TAcc,
-    typename TContainerCategorie,
-    unsigned simDim>
-struct AfterLastElement<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, 
-    TIndex, 
-    TContainerCategorie>
-{
-    
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    bool
-    test (TContainer*, TIndex const & idx, TSizeFunction const &)
-    const
-    {
-        return not idx.isValid();
-    }
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    void
-    set(TContainer*, TIndex & idx, TSizeFunction &)
-    const
-    {
-        idx.ptr = nullptr;
-    }
-    
-} ;
-
-/**
- * @brief Implementation of the array like last element trait. For further details
- * \see LastElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TIndex,
-    typename TContainerCategorie,
-    typename TAcc,
-    unsigned simDim>
-struct LastElement<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-    TIndex,
-    TContainerCategorie>
-{
-    
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    void
-    operator() (TContainer* conPtr, 
-                TIndex& index, 
-                TSizeFunction& size)
-    {
-        index = conPtr->last();
-    }
-    
-} ;
-
-/**
- * @brief The implementation to get the last element in a array like data
- * structure. For futher details \see PreviousElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TRange,
-    typename TContainerCategorie,
-    typename TIndex,
-    typename TAcc,
-    unsigned simDim>
-struct PreviousElement<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-    TIndex,
-    TRange,
-    TContainerCategorie>
-{
-    
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    
-    template<typename TSizeFunction>
-    HDINLINE
-    int
-    operator() (
-        TContainer* container, 
-        TIndex& idx, 
-        TRange const &,
-        TRange const & jumpsize,
-        TSizeFunction const & size)
-    {
-        TRange i = static_cast<TRange>(0);
-        for(; i<jumpsize; ++i)
-        {
-            idx = container->previous(idx);
-            if(not idx.isValid())
-            {
-                return jumpsize - i;
-            }
-        }
-
-        return static_cast<TRange>(0);
-    }
-    
-} ;
-
-/**
- * @brief Implmentation to get check whether the iterator is on the element 
- * before the first one. \see BeforeFirstElement.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TIndex,
-    typename TOffset,
-    typename TContainerCategorie,
-    typename TAcc,
-    unsigned simDim>
-struct BeforeFirstElement<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>, 
-    TIndex,
-    TOffset,
-    TContainerCategorie>
-{
-    
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    
-    template<typename TSizeFunction, typename TOffset_>
-    HDINLINE
-    bool
-    test (TContainer*, TIndex const & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        return not idx.isValid();
-    }
-    
-    template<typename TSizeFunction, typename TOffset_>
-    HDINLINE
-    void
-    set(TContainer*, TIndex & idx, TOffset_ &&, TSizeFunction const &)
-    const
-    {
-        idx.ptr = nullptr;
-    }
-}; // struct BeforeFirstElement
-    
-} // namespace navigator
-
-namespace accessor
-{
-
-/**
- * @brief get the value of the element, at the iterator positions. \see Get.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    typename TComponent,
-    typename TContainerCategorie,
-    typename TIndex,
-    unsigned simDim>
-struct Get<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-    TComponent, 
-    TIndex, 
-    TContainerCategorie
+    >
 >
 {
-    typedef pmacc::FrameWrapper<
-        TParticleBox, 
-        TMapper, 
-        TAcc,
-        simDim
-    > TContainer;
-    
-    HDINLINE
-    TComponent&
-    operator() (TContainer*, TIndex& idx)
-    {
-        return *idx;
-    }
-};    
-
-/**
- * @brief check if both iterators are at the same element. \see Equal.hpp
- */
-template<
-    typename TParticleBox, 
-    typename TMapper,
-    typename TAcc,
-    typename TComponent,
-    typename TContainerCategorie,
-    typename TIndex,
-    unsigned simDim>
-struct Equal<
-    pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-    TComponent, 
-    TIndex, 
-    TContainerCategorie
-    >
-{
-    typedef pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim> TContainer;
-    HDINLINE
-    bool
-    operator() (TContainer* con1, TIndex& idx1, TContainer* con2, TIndex& idx2)
-    {
-        return con1 == con2 && idx1 == idx2;
-    }
+    static const bool value=true;
 };
 
-//  /**
-//  * @brief Check if the iterator one is ahead the second one. \see Ahead.hpp
-//  */
-// template<
-//     typename TParticleBox, 
-//     typename TMapper,
-//     typename TAcc,
-//     typename TComponent,
-//     typename TContainerCategorie;
-//     typename TIndex>
-// struct Ahead<
-//     pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-//     TComponent, 
-//     TIndex, 
-//     TContainerCategorie>
-// {
-// };
-// 
-// 
-// 
-// /**
-//  * @brief check wheter the iterator 1 is behind the second one. \see Behind.hpp
-//  */
-// template<
-//     typename TParticleBox, 
-//     typename TMapper,
-//     typename TAcc,
-//     typename TComponent,
-//     typename TIndex>
-// struct Behind<
-//     pmacc::FrameWrapper<TParticleBox, TMapper, TAcc, simDim>,
-//     TComponent, 
-//     TIndex, 
-//     void
-//     >
-// {
-// };
+template<
+    typename T_Acc,
+    typename T_ParticleBox,
+    uint_fast32_t simDim
+>
+struct ContainerCategory<pmacc::SupercellContainer<
+        T_Acc,
+        T_ParticleBox,
+        simDim
+    >
+>
+{
+    using type = hzdr::container::categorie::ArrayNDLike< simDim>;
+};
 
-} // namespace accessor
+    
+}// namespace traits
 
-} // namespace traits
-} // namespace pmacc
+} //namepsace hzdr 
 
 namespace pmacc
 {
@@ -654,7 +398,7 @@ struct KernelFillGapsLastFrame
                 uint32_t const
             )
             {
-                lastFrame = pb.getLastFrame( superCellIdx );
+                lastFrame = pb.getLastFrame( DataSpace< dim >( superCellIdx ) );
                 counterGaps = 0;
                 counterParticles = 0;
                 srcGap = 0;
@@ -763,6 +507,247 @@ struct KernelFillGapsLastFrame
  *
  * @tparam T_numWorkers number of workers
  */
+#if 0
+template< uint32_t T_numWorkers >
+struct KernelFillGaps
+{
+    /** fill particle gaps
+     *
+     * @tparam T_ParBox pmacc::ParticlesBox, particle box type
+     * @tparam T_Mapping mapper functor type
+     *
+     * @param pb particle memory
+     * @param mapper functor to map a block to a supercell
+     */
+    template<
+        typename T_ParBox,
+        typename T_Mapping,
+        typename T_Acc
+    >
+    DINLINE void operator()(
+        T_Acc const & acc,
+        T_ParBox pb,
+        T_Mapping const mapper
+    ) const
+    {
+        using namespace particles::operations;
+        using namespace mappings::threads;
+
+        using FramePtr = typename T_ParBox::FramePtr;
+
+        constexpr uint32_t frameSize = math::CT::volume< typename T_ParBox::FrameType::SuperCellSize >::type::value;
+        constexpr uint32_t dim = T_Mapping::Dim;
+        constexpr uint32_t numWorkers = T_numWorkers;
+
+        uint32_t const workerIdx = threadIdx.x;
+
+        DataSpace< dim > const superCellIdx( mapper.getSuperCellIndex( DataSpace< dim >( blockIdx ) ) );
+
+        // data copied from right (last) to left (first)
+        PMACC_SMEM(
+            acc,
+            firstFrame,
+            FramePtr
+        );
+        PMACC_SMEM(
+            acc,
+            lastFrame,
+            FramePtr
+        );
+
+        PMACC_SMEM(
+            acc,
+            particleIndices_sh,
+            memory::Array<
+                int,
+                frameSize
+            >
+        );
+        // number of gaps in firstFrame frame
+        PMACC_SMEM(
+            acc,
+            counterGaps,
+            int
+        );
+        // number of particles in the lastFrame
+        PMACC_SMEM(
+            acc,
+            counterParticles,
+            int
+        );
+
+        ForEachIdx<
+            IdxConfig<
+                1,
+                numWorkers
+            >
+        > onlyMaster{ workerIdx };
+
+        onlyMaster(
+            [&](
+                uint32_t const,
+                uint32_t const
+            )
+            {
+                firstFrame = pb.getFirstFrame( superCellIdx );
+                lastFrame = pb.getLastFrame( superCellIdx );
+            }
+        );
+
+        __syncthreads( );
+
+        while ( firstFrame.isValid( ) && firstFrame != lastFrame )
+        {
+            onlyMaster(
+                [&](
+                    uint32_t const,
+                    uint32_t const
+                )
+                {
+                    counterGaps = 0;
+                    counterParticles = 0;
+                }
+            );
+
+            __syncthreads( );
+
+            using ParticleDomCfg = IdxConfig<
+                frameSize,
+                numWorkers
+            >;
+            // loop over all particles in the frame
+            ForEachIdx< ParticleDomCfg > forEachParticle( workerIdx );
+
+            memory::CtxArray<
+                int,
+                ParticleDomCfg
+            > localGapIdxCtx( INV_LOC_IDX );
+
+            // find gaps in firstFrame
+            forEachParticle(
+                [&](
+                    uint32_t const linearIdx,
+                    uint32_t const idx
+                )
+                {
+                    if( firstFrame[ linearIdx ][ multiMask_ ] == 0 )
+                    {
+                        localGapIdxCtx[ idx ] = nvidia::atomicAllInc( acc, &counterGaps, ::alpaka::hierarchy::Threads{} );
+                    }
+                }
+            );
+
+            __syncthreads( );
+
+            if( counterGaps != 0 )
+            {
+                // count particles in lastFrame
+                forEachParticle(
+                    [&](
+                        uint32_t const linearIdx,
+                        uint32_t const idx
+                    )
+                    {
+                        // search particles for gaps
+                        if( lastFrame[ linearIdx ][ multiMask_ ] == 1 )
+                        {
+                            int const localParticleIdx = nvidia::atomicAllInc( acc, &counterParticles, ::alpaka::hierarchy::Threads{} );
+                            particleIndices_sh[ localParticleIdx ] = linearIdx;
+                        }
+                    }
+                );
+
+                __syncthreads( );
+
+                // copy particles from lastFrame to the gaps in firstFrame
+                forEachParticle(
+                    [&](
+                        uint32_t const linearIdx,
+                        uint32_t const idx
+                    )
+                    {
+                        if( localGapIdxCtx[ idx ] < counterParticles )
+                        {
+                            int const parIdx = particleIndices_sh[ localGapIdxCtx[ idx ] ];
+                            auto parDestFull = firstFrame[ linearIdx ];
+                            // enable particle
+                            parDestFull[ multiMask_ ] = 1;
+                            /* we not update multiMask because copy from mem to mem is to slow
+                             * we have enabled particle explicit
+                             */
+                            auto parDest = deselect< multiMask >( parDestFull );
+                            auto parSrc = lastFrame[ parIdx ];
+                            assign( parDest, parSrc );
+                            parSrc[ multiMask_ ] = 0;
+                        }
+                    }
+                );
+
+                __syncthreads( );
+
+                onlyMaster(
+                    [&](
+                        uint32_t const,
+                        uint32_t const
+                    )
+                    {
+                        if( counterGaps < counterParticles )
+                        {
+                            // any gap in the first frame is filled
+                            firstFrame = pb.getNextFrame( firstFrame );
+                        }
+                        else if( counterGaps > counterParticles )
+                        {
+                            // we need more particles
+                            lastFrame = getPreviousFrameAndRemoveLastFrame(
+                                lastFrame,
+                                pb,
+                                superCellIdx
+                            );
+                        }
+                        else if( counterGaps == counterParticles )
+                        {
+                            // update lastFrame and firstFrame
+                            lastFrame = getPreviousFrameAndRemoveLastFrame(
+                                lastFrame,
+                                pb,
+                                superCellIdx
+                            );
+                            if( lastFrame.isValid( ) && lastFrame != firstFrame )
+                            {
+                                firstFrame = pb.getNextFrame( firstFrame );
+                            }
+                        }
+                    }
+                );
+            }
+            else
+            {
+                // there are no gaps in firstFrame, goto to next frame
+                onlyMaster(
+                    [&](
+                        uint32_t const,
+                        uint32_t const
+                    )
+                    {
+                        firstFrame = pb.getNextFrame( firstFrame );
+                    }
+                );
+            }
+
+            __syncthreads( );
+
+        }
+
+        // fill all gaps in the last frame of the supercell
+        KernelFillGapsLastFrame< numWorkers >{ }(
+            acc,
+            pb,
+            mapper
+        );
+    }
+};
+#endif
 template< uint32_t T_numWorkers >
 struct KernelFillGaps
 {
@@ -805,49 +790,56 @@ struct KernelFillGaps
 
 
 
-        // define a frame wrapper. We use this to iterate over all frames
-        using FrameWrapper = picongpu::FrameWrapper<
-            T_ParBox, 
-            T_Mapping, 
+        
+        using SupercellWrapper = picongpu::SupercellContainer<
             T_Acc,
+            T_ParBox,
             dim
         >;
-        FrameWrapper frameWrapper(
-            acc,  
-            pb, 
-            mapper
+        using OffsetSupercell = hzdr::SelfValue<RangeTypeSupercell < dim > >;
+        
+        // We go over all frames -> Within the particles is the parallization
+        typedef hzdr::SelfValue<uint_fast32_t, 0> Offset;
+        typedef hzdr::SelfValue<uint_fast32_t, 1> Jumpsize;
+
+        RangeTypeSupercell < dim >::supercellSize = mapper.getGridSuperCells();
+        auto supercellContainer = SupercellWrapper(
+            pb,
+            acc,
+            RangeTypeSupercell<3>(mapper.getGridSuperCells())
         );
         
-        // define a view
-        using Offset = pmacc::IdentityValue<
-            uint_fast32_t, 
-            0
-        >;
-        using Jumpsize = pmacc::IdentityValue<
-            uint_fast32_t, 
-            1
-        >;
-        
-        auto && preception = pmacc::makeIteratorPrescription(
-            pmacc::makeAccessor(),
-            pmacc::makeNavigator(
+        auto && receptionFrame = hzdr::makeIteratorPrescription(
+            hzdr::makeAccessor(),
+            hzdr::makeNavigator(
                 Offset(),
                 Jumpsize()
             )
         );
         
-         auto && view = pmacc::makeView(
-             pb.getSuperCell(superCellIdx),
-             preception
+        auto && receptionSupercell = hzdr::makeIteratorPrescription(
+            hzdr::makeAccessor(),
+            hzdr::makeNavigator(
+                OffsetSupercell(superCellIdx),
+                Jumpsize(),
+                hzdr::Slice<hzdr::slice::Distance, 0>()
+            ),
+            receptionFrame
+        );
+
+        
+         auto && view = hzdr::makeView(
+             supercellContainer,
+             receptionSupercell
          );
         
         // define an iterator type
-        using View = decltype(pmacc::makeView(
-             pb.getSuperCell(superCellIdx),
-             preception
+        using View = decltype(hzdr::makeView(
+             supercellContainer,
+             receptionSupercell
          ));
         
-        using Iterator = typename View::IteratorType;
+        using Iterator = decltype(view.begin());
         // data copied from right (last) to left (first)
         PMACC_SMEM(
             acc,
@@ -1090,7 +1082,7 @@ struct KernelShiftParticles
         using FrameType = typename ParBox::FrameType;
         using FramePtr = typename ParBox::FramePtr;
 
-        PMACC_CONSTEXPR_CAPTURE uint32_t dim = Mapping::Dim;
+        constexpr uint32_t dim = Mapping::Dim;
         constexpr uint32_t frameSize = math::CT::volume< typename FrameType::SuperCellSize >::type::value;
         /* number exchanges in 2D=9 and in 3D=27 */
         constexpr uint32_t numExchanges = traits::NumberOfExchanges< dim >::value;
@@ -1540,7 +1532,7 @@ struct KernelCopyGuardToExchange
         using namespace particles::operations;
         using namespace mappings::threads;
 
-        PMACC_CONSTEXPR_CAPTURE uint32_t dim = T_Mapping::Dim;
+        constexpr uint32_t dim = T_Mapping::Dim;
         constexpr uint32_t frameSize = math::CT::volume< typename T_ParBox::FrameType::SuperCellSize >::type::value;
         constexpr uint32_t numWorkers = T_numWorkers;
 
@@ -1758,7 +1750,7 @@ struct KernelInsertParticles
         using namespace particles::operations;
         using namespace mappings::threads;
 
-        PMACC_CONSTEXPR_CAPTURE uint32_t dim = T_Mapping::Dim;
+        constexpr uint32_t dim = T_Mapping::Dim;
         constexpr uint32_t frameSize = math::CT::volume< typename T_ParBox::FrameType::SuperCellSize >::type::value;
         constexpr uint32_t numWorkers = T_numWorkers;
 
