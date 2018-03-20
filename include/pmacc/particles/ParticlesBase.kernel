@@ -111,9 +111,7 @@ struct RangeTypeSupercell<3u> : public DataSpace<3u>
 
 DataSpace<3u> RangeTypeSupercell<3u>::supercellSize = DataSpace<3u>(0,0,0);
 
-
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim
 >
@@ -122,23 +120,18 @@ struct SupercellContainer
 public:
     
 protected:
-    const T_Acc & acc;
     T_ParticleBox pb;
     RangeTypeSupercell<simDim> _dim;
 public:
     using Supercell = typename std::decay<
         decltype(pb.getSuperCell( DataSpace<simDim>()))
     >::type;
-    template<
-        typename _T_Acc
-    >
+
     HDINLINE
     SupercellContainer(
         T_ParticleBox pb,
-        _T_Acc && acc,
         RangeTypeSupercell<simDim> const & _dim
     ):
-        acc(pmacc::iterator::forward<_T_Acc>(acc)),
         pb(pb),
         _dim(_dim)
     {}
@@ -181,18 +174,16 @@ namespace hzdr
 namespace traits
 {
 template<
-    typename T_Acc,
+
     typename T_ParticleBox,
     uint_fast32_t simDim
     >
 struct NumberElements<pmacc::SupercellContainer<
-    T_Acc,
     T_ParticleBox,
     simDim
 > >
 {
     using Container = pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     > ;
@@ -215,17 +206,14 @@ struct NumberElements<pmacc::SupercellContainer<
     
 /// @brief This is the trait for the componenttype of the particle box
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim>
 struct ComponentType<pmacc::SupercellContainer<
-    T_Acc,
     T_ParticleBox,
     simDim
 > >
 {
     using container = pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     >;
@@ -233,13 +221,11 @@ struct ComponentType<pmacc::SupercellContainer<
 };
 
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim,
     typename SFIANE
 >
 struct IndexType<pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     >,
@@ -250,13 +236,11 @@ struct IndexType<pmacc::SupercellContainer<
 };
 
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim,
     typename SFIANE
 >
 struct RangeType<pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     >,
@@ -267,12 +251,10 @@ struct RangeType<pmacc::SupercellContainer<
 };
 
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim
 >
 struct HasConstantSize<pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     >
@@ -282,12 +264,10 @@ struct HasConstantSize<pmacc::SupercellContainer<
 };
 
 template<
-    typename T_Acc,
     typename T_ParticleBox,
     uint_fast32_t simDim
 >
 struct ContainerCategory<pmacc::SupercellContainer<
-        T_Acc,
         T_ParticleBox,
         simDim
     >
@@ -792,7 +772,6 @@ struct KernelFillGaps
 
         
         using SupercellWrapper = picongpu::SupercellContainer<
-            T_Acc,
             T_ParBox,
             dim
         >;
@@ -805,7 +784,6 @@ struct KernelFillGaps
         RangeTypeSupercell < dim >::supercellSize = mapper.getGridSuperCells();
         auto supercellContainer = SupercellWrapper(
             pb,
-            acc,
             RangeTypeSupercell<3>(mapper.getGridSuperCells())
         );
         
@@ -822,7 +800,7 @@ struct KernelFillGaps
             hzdr::makeNavigator(
                 OffsetSupercell(superCellIdx),
                 Jumpsize(),
-                hzdr::Slice<hzdr::slice::Distance, 0>()
+                hzdr::Slice<hzdr::slice::NumberElements, 1>()
             ),
             receptionFrame
         );

@@ -1,3 +1,34 @@
+/* Copyright 2018 Sebastian Hahn
+
+ * This file is part of DeepIterator.
+ *
+ * DeepIterator is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * DeepIterator is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PIConGPU.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <iostream>
+#include <cassert>
+
+#include "deepiterator/traits/Traits.hpp"
+#include "deepiterator/definitions/hdinline.hpp"
+#include "deepiterator/definitions/forward.hpp"
+
+
+namespace hzdr
+{
 /**
  * \struct Accessor
  * 
@@ -15,11 +46,32 @@
  * if the first iterator is behind the second one.
  * The functions ahead and behind are only avail, if the iterator is random 
  * accessable. 
- * To use the default Accessor you need to spezify one trait for each function:
- * 1. get: hzdr::traits::accessor::Get<TContainer, TComponent, TIndex>
- * 2. ahead: hzdr::traits::accessor::Ahead<TContainer, TComponent, TIndex>
- * 3. equal: hzdr::traits::accessor::Equal<TContainer, TComponent, TIndex>
- * 4. behind: hzdr::traits::accessor::Behind<TContainer, TComponent, TIndex>
+ * To use the default Accessor you need to spezify the following traits for 
+ * each function:
+ * 1. get: hzdr::traits::accessor::Get<
+ *      TContainer, 
+ *      TComponent, 
+ *      TIndex, 
+ *      TContainerCategory
+ * >
+ * 2. ahead: hzdr::traits::accessor::Ahead<
+ *      TContainer, 
+ *      TComponent, 
+ *      TIndex, 
+ *      TContainerCategory
+ * >
+ * 3. equal: hzdr::traits::accessor::Equal<
+ *      TContainer, 
+ *      TComponent, 
+ *      TIndex,
+ *      TContainerCategory
+ * >
+ * 4. behind: hzdr::traits::accessor::Behind<
+ *      TContainer, 
+ *      TComponent, 
+ *      TIndex,
+ *      TContainerCategory
+ * >
  * @tparam TContainer The container over which you like to iterate. 
  * @tparam TComponent The type of the container component. 
  * @tparam TIndex Type of the index to get access to the value of the iterator 
@@ -34,33 +86,6 @@
  * @tparam isRandomAccessable true, if thecontainer is random accessable, false
  * otherwise
  */
-
-#pragma once
-
-#include <iostream>
-#include "deepiterator/traits/Traits.hpp"
-#include "deepiterator/definitions/hdinline.hpp"
-#include "deepiterator/definitions/forward.hpp"
-#include <cassert>
-
-namespace hzdr
-{
-namespace details
-{
-template <typename T>
-class UndefinedAhead
-{
-    typedef char one;
-    typedef long two;
-
-    template <typename C> static one test( decltype(&C::UNDEFINED) ) ;
-    template <typename C> static two test(...);    
-
-public:
-    enum { value = sizeof(test<T>(0)) == sizeof(char) };
-}; // class UndefinedAhead
-} // namespace details
-     
 template<
     typename TContainer,
     typename TComponent,
@@ -88,6 +113,8 @@ struct Accessor
     
     HDINLINE Accessor& operator=(Accessor const &) = default;
     HDINLINE Accessor& operator=(Accessor &&) = default;
+    
+    
     /**
      * @brief this function dereference a container and a index to get the 
      * component
@@ -112,7 +139,7 @@ struct Accessor
     }
     
     
-        /**
+    /**
      * @brief this function compares two iterator positions. 
      * @param containerPtr1 pointer to the container of the first iterator
      * @param idx1 current position of the first iterator 
@@ -140,6 +167,7 @@ struct Accessor
             index2
         );
     }
+    
     
     /**
      * @brief this function compares two iterator positions. 
@@ -171,6 +199,7 @@ struct Accessor
             index2
         );
     }
+    
     
     /**
      * @brief this function compares two iterator positions. 
@@ -211,22 +240,23 @@ struct Accessor
      TBehind _behind;
 } ;
 
+
 /**
- * @brief the accessor prescription.
+ * @brief the accessor prescription. This is only a threshold
  */
-template<>
+template<bool isRandomAccessable>
 struct Accessor<
     details::UndefinedType, 
     details::UndefinedType,
     details::UndefinedType,
     details::UndefinedType,
-    hzdr::details::UndefinedType,
-    hzdr::details::UndefinedType,
-    hzdr::details::UndefinedType,
-    hzdr::details::UndefinedType>
+    details::UndefinedType,
+    details::UndefinedType,
+    details::UndefinedType,
+    details::UndefinedType,
+    isRandomAccessable
+>
 {
-    typedef details::UndefinedType ContainerType;
-    
     HDINLINE Accessor() = default;
     HDINLINE Accessor(Accessor const &) = default;
     HDINLINE Accessor(Accessor &&) = default;
@@ -234,7 +264,6 @@ struct Accessor<
 
 namespace details 
 {
-
 
 
 /**
@@ -255,12 +284,99 @@ template<
     typename TContainer,
     typename TContainerNoRef = typename std::decay<TContainer>::type,
     typename TContainerCategory = typename traits::ContainerCategory<
-        typename std::decay<TContainer>::type
+        TContainerNoRef
     >::type,
     typename TIndex = typename traits::IndexType<
         TContainerNoRef,
         TContainerCategory
     >::type,
+    typename TComponent = typename hzdr::traits::ComponentType<
+        TContainerNoRef
+    >::type,
+    typename TGet = hzdr::traits::accessor::Get<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,                                          
+    typename TAhead = hzdr::traits::accessor::Ahead<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,
+    typename TEqual = hzdr::traits::accessor::Equal<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,
+    typename TBehind = hzdr::traits::accessor::Behind<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >, 
+    typename TAccessor,
+    bool isRandomAccessable = hzdr::traits::IsRandomAccessable<
+        TContainerNoRef,
+        TContainerCategory
+    >::value
+>
+HDINLINE
+auto 
+makeAccessor(TAccessor&&)
+-> hzdr::Accessor<
+    TContainerNoRef,
+    TComponent,
+    TIndex,
+    TContainerCategory,
+    TGet,
+    TAhead,
+    TEqual,
+    TBehind,
+    isRandomAccessable
+>
+{
+    using AccessorType =  hzdr::Accessor<
+        TContainerNoRef,
+        TComponent,
+        TIndex,
+        TContainerCategory,
+        TGet,
+        TAhead,
+        TEqual,
+        TBehind,
+        isRandomAccessable
+    > ;
+    auto && accessor = AccessorType();
+    return accessor;
+}
+
+
+/**
+ * @brief This function use a container template to
+ * create a accessor. To use this function several traits must be defined.
+ * 1. IndexType
+ * 2. ContainerCategory
+ * 3. ComponentType
+ * 4. Get
+ * 5. Ahead
+ * 6. Equal
+ * 7. Behind
+ * @tparam TContainer. Type of the container.
+ * @return An accessor with the functionallity given by the traits.
+ */
+template<
+    typename TContainer,
+    typename TContainerNoRef = typename std::decay<TContainer>::type,
+    typename TContainerCategory = typename traits::ContainerCategory<
+        typename std::decay<TContainer>::type
+    >::type,    
+    typename TIndex = typename traits::IndexType<
+        TContainerNoRef,
+        TContainerCategory
+    >::type,    
     typename TComponent = typename hzdr::traits::ComponentType<
         TContainerNoRef
     >::type,
@@ -287,61 +403,17 @@ template<
         TComponent, 
         TIndex, 
         TContainerCategory
-    >, 
-    typename TAccessor>
-HDINLINE
-auto 
-makeAccessor(TAccessor&&)
--> hzdr::Accessor<
-    TContainerNoRef,
-    TComponent,
-    TIndex,
-    TContainerCategory,
-    TGet,
-    TAhead,
-    TEqual,
-    TBehind>
-{
-    using AccessorType =  hzdr::Accessor<
-        TContainerNoRef,
-        TComponent,
-        TIndex,
+    >,
+    bool isRandomAccessable = hzdr::traits::IsRandomAccessable<
+        TContainer,
         TContainerCategory
-    > ;
-    auto && accessor = AccessorType();
-    return accessor;
-}
-
-/**
- * @brief This function use a container template to
- * create a accessor. To use this function several traits must be defined.
- * 1. IndexType
- * 2. ContainerCategory
- * 3. ComponentType
- * 4. Get
- * 5. Ahead
- * 6. Equal
- * 7. Behind
- * @tparam TContainer. Type of the container.
- * @return An accessor with the functionallity given by the traits.
- */
-template<
-    typename TContainer,
-    typename TContainerNoRef = typename std::decay<TContainer>::type,
-    typename TContainerCategory = typename traits::ContainerCategory<typename std::decay<TContainer>::type>::type,    
-    typename TIndex = typename traits::IndexType<
-        TContainerNoRef,
-        TContainerCategory
-    >::type,    
-    typename TComponent = typename hzdr::traits::ComponentType<TContainerNoRef>::type,
-    typename TGet = hzdr::traits::accessor::Get<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TAhead = hzdr::traits::accessor::Ahead<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TEqual = hzdr::traits::accessor::Equal<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TBehind = hzdr::traits::accessor::Behind<TContainerNoRef, TComponent, TIndex, TContainerCategory> >
+    >::value
+>
 auto 
 HDINLINE
 makeAccessor()
--> hzdr::Accessor<
+-> 
+hzdr::Accessor<
     TContainerNoRef,
     TComponent,
     TIndex,
@@ -349,9 +421,11 @@ makeAccessor()
     TGet,
     TAhead,
     TEqual,
-    TBehind>
+    TBehind,
+    isRandomAccessable
+>
 {
-    typedef hzdr::Accessor<
+    using ResultType = hzdr::Accessor<
         TContainerNoRef,
         TComponent,
         TIndex,
@@ -359,7 +433,9 @@ makeAccessor()
         TGet,
         TAhead,
         TEqual,
-        TBehind>                                          ResultType;
+        TBehind,
+        isRandomAccessable
+    >;
         
     return ResultType();
 }
@@ -383,18 +459,46 @@ makeAccessor()
 template<
     typename TContainer,
     typename TContainerNoRef = typename std::decay<TContainer>::type,
-    typename TContainerCategory = typename traits::ContainerCategory<typename std::decay<TContainer>::type>::type,
+    typename TContainerCategory = typename traits::ContainerCategory<
+        typename std::decay<TContainer>::type
+    >::type,
     typename TIndex = typename traits::IndexType<
         TContainerNoRef,
         TContainerCategory
     >::type,
     
-    typename TComponent = typename hzdr::traits::ComponentType<TContainerNoRef>::type,
-    typename TGet = hzdr::traits::accessor::Get<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TAhead = hzdr::traits::accessor::Ahead<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TEqual = hzdr::traits::accessor::Equal<TContainerNoRef, TComponent, TIndex, TContainerCategory>,
-    typename TBehind = hzdr::traits::accessor::Behind<TContainerNoRef, TComponent, TIndex, TContainerCategory> >
-    
+    typename TComponent = typename hzdr::traits::ComponentType<
+        TContainerNoRef
+    >::type,
+    typename TGet = hzdr::traits::accessor::Get<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,                                          
+    typename TAhead = hzdr::traits::accessor::Ahead<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,
+    typename TEqual = hzdr::traits::accessor::Equal<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,
+    typename TBehind = hzdr::traits::accessor::Behind<
+        TContainerNoRef, 
+        TComponent, 
+        TIndex, 
+        TContainerCategory
+    >,
+    bool isRandomAccessable = hzdr::traits::IsRandomAccessable<
+        TContainer,
+        TContainerCategory
+    >::value
+>    
 auto 
 HDINLINE
 makeAccessor(TContainer&&)
@@ -406,9 +510,11 @@ makeAccessor(TContainer&&)
     TGet,
     TAhead,
     TEqual,
-    TBehind>
+    TBehind,
+    isRandomAccessable
+>
 {
-    typedef hzdr::Accessor<
+    using ResultType = hzdr::Accessor<
         TContainerNoRef,
         TComponent,
         TIndex,
@@ -416,14 +522,12 @@ makeAccessor(TContainer&&)
         TGet,
         TAhead,
         TEqual,
-        TBehind>                                         ResultType;
+        TBehind,
+        isRandomAccessable
+    >;
         
     return ResultType();
 }
-
-
-
-
 
 
 /**
@@ -440,9 +544,10 @@ makeAccessor()
     hzdr::details::UndefinedType,
     hzdr::details::UndefinedType,
     hzdr::details::UndefinedType,
-    hzdr::details::UndefinedType>
+    hzdr::details::UndefinedType,
+    false>
 {
-    typedef hzdr::Accessor<
+    using ResultType = hzdr::Accessor<
         hzdr::details::UndefinedType,
         hzdr::details::UndefinedType,
         hzdr::details::UndefinedType,
@@ -450,9 +555,12 @@ makeAccessor()
         hzdr::details::UndefinedType,
         hzdr::details::UndefinedType,
         hzdr::details::UndefinedType,
-        hzdr::details::UndefinedType>                           ResultType;
+        hzdr::details::UndefinedType,
+        false
+    >;
     return ResultType();
 }
+
 
 /**
  * @brief This function forwards an own accessor. This is a identity function

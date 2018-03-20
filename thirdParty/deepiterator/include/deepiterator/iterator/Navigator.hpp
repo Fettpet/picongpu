@@ -1,21 +1,19 @@
-/* Copyright 2013-2018 Sebastian Hahn
+/* Copyright 2018 Sebastian Hahn
+
+ * This file is part of DeepIterator.
  *
- * This file is part of PMacc.
- *
- * PMacc is free software: you can redistribute it and/or modify
- * it under the terms of either the GNU General Public License or
- * the GNU Lesser General Public License as published by
+ * DeepIterator is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * PMacc is distributed in the hope that it will be useful,
+ * DeepIterator is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with PMacc.
+ * along with PIConGPU.
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -29,39 +27,6 @@
 
 namespace hzdr 
 {
-namespace details
-{
-struct UndefinedType;
-
-template <typename T>
-class UndefinedLastElement
-{
-    using one = char;
-    using two = long ;
-
-    template <typename C>
-    static
-    one
-    test( decltype(&C::UNDEFINED) ) ;
-
-    template <typename C>
-    static
-    two
-    test(...);
-
-public:
-    enum { value = sizeof(test<T>(0)) == sizeof(char) };
-}; // class UndefinedAhead
-
-template<typename T>    
-struct OffseT_RangeType
-{
-    T v;
-    using type = decltype(v());
-};
-
-} // namespace details
-
 
 /**
 * \struct Navigator
@@ -143,7 +108,7 @@ template<
     typename T_LastElement = hzdr::details::UndefinedType,
     typename T_PreviousElement = hzdr::details::UndefinedType,
     typename T_BeforeFirstElement = hzdr::details::UndefinedType,
-    bool isBidirectional = ! details::UndefinedLastElement<T_LastElement>::value
+    bool isBidirectional = false
 >
 struct Navigator
 {
@@ -175,6 +140,7 @@ public:
     HDINLINE Navigator& operator=(const Navigator&) = default;
     HDINLINE Navigator& operator=(Navigator&&) = default;
 
+    
     /**
      * @brief Set the offset and the jumpsize to the given values
        @param offset the distance from the start to the first element
@@ -287,6 +253,7 @@ public:
         // position
     }
     
+    
     /**
      * @brief set the iterator to the first element
      * @param containerPtr pointer to the container, over which we iterate
@@ -313,12 +280,12 @@ public:
         );
     }
     
+    
     /**
      * @brief set the iterator to the last element. 
      * @param containerPtr pointer to the container, over which we iterate
      * @param index out: last element of the iterator.
      */
-
     template< bool T=isBidirectional>
     HDINLINE 
     auto
@@ -358,6 +325,7 @@ public:
         
     }
     
+    
     /**
      * @brief set the iterator to the after last element
      * @param containerPtr pointer to the container, over which we iterate
@@ -378,13 +346,13 @@ public:
         );
     }
     
+    
     /**
      * @brief set the iterator to the last element. It is possible that two 
      * iterators, the first start with begin, the second with last, never meet.
      * @param containerPtr pointer to the container, over which we iterate
      * @param index out: index of the before first element
      */
-
     template< bool T=isBidirectional>
     HDINLINE
     auto
@@ -400,6 +368,7 @@ public:
             containerSize
         );
     }
+    
     
     /**
      * @brief check wheter the index is after the last element
@@ -422,6 +391,7 @@ public:
             containerSize
         );
     }
+    
     
     /**
      * @brief check wheter the index is before the first element
@@ -457,6 +427,7 @@ public:
         ) != static_cast<RangeType>(0));
     }
     
+    
     /**
      * @brief this function determine the number of elements within the 
      * container
@@ -473,6 +444,7 @@ public:
         assert(containerPtr != nullptr); // containerptr should be valid
         return containerSize(containerPtr);
     }
+    
     
     /**
      * @brief this function determine the number of elements over which the
@@ -613,8 +585,8 @@ makeNavigator(
         hzdr::details::UndefinedType,
         false>
 {
-    typedef typename std::decay<T_Offset>::type OffsetType;
-    typedef typename std::decay<T_Jumpsize>::type JumpsizeType;
+    using OffsetType = typename std::decay<T_Offset>::type;
+    using JumpsizeType = typename std::decay<T_Jumpsize>::type;
     typedef hzdr::Navigator<
         details::UndefinedType,
         details::UndefinedType,
@@ -630,18 +602,14 @@ makeNavigator(
         hzdr::details::UndefinedType,
         hzdr::details::UndefinedType,
         false> ResultType;
-    auto && result = ResultType(
+    return ResultType(
         hzdr::forward<T_Offset>(offset),
         hzdr::forward<T_Jumpsize>(jumpsize));
-    return result;
 }
-
 
 
 namespace details
 {
-
-
 
     template<
         typename T,

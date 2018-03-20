@@ -1,18 +1,40 @@
-#pragma once
-#include "deepiterator/definitions/forward.hpp"
-/**
- * @author Sebastian Hahn t.hahn <at> hzdr.de
- * @brief A concept consists of an accessor, a navigator and a child. A concept
- * decribes an abstract way to iterate through the data. The navigator and the 
- * accessor are not bound to a container.
- * 
+/* Copyright 2018 Sebastian Hahn
+
+ * This file is part of DeepIterator.
+ *
+ * DeepIterator is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * DeepIterator is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PIConGPU.
+ * If not, see <http://www.gnu.org/licenses/>.
  */
+
+#pragma once
+
+#include "deepiterator/definitions/forward.hpp"
+#include "deepiterator/definitions/hdinline.hpp"
+
 
 namespace hzdr 
 {
 
 namespace details 
 {
+/**
+ * @author Sebastian Hahn t.hahn <at> hzdr.de
+ * @brief A Prescription consists of an accessor, a navigator and a child. 
+ * A Prescription decribes an abstract way to iterate through the data. The 
+ * navigator and the accessor are not bound to a container.
+ * 
+ */
 template<
     typename TAccessor,
     typename TNavigator,
@@ -36,8 +58,10 @@ struct IteratorPrescription
         typename TNavigator_,
         typename TAccessor_>
     HDINLINE
-    IteratorPrescription(TAccessor_ && acc,
-                    TNavigator_ && navi):
+    IteratorPrescription(
+            TAccessor_ && acc,
+            TNavigator_ && navi
+    ):
         child(hzdr::NoChild()),
         navigator(hzdr::forward<TNavigator_>(navi)),
         accessor(hzdr::forward<TAccessor_>(acc))
@@ -48,10 +72,11 @@ struct IteratorPrescription
         typename TAccessor_,
         typename TChild_>
     HDINLINE
-    IteratorPrescription(TAccessor_ && acc,
-                    TNavigator_ && navi,
-                    TChild_ && child
-                   ):
+    IteratorPrescription(
+            TAccessor_ && acc,
+            TNavigator_ && navi,
+            TChild_ && child
+    ):
         child(hzdr::forward<TChild_>(child)),
         navigator(hzdr::forward<TNavigator_>(navi)),
         accessor(hzdr::forward<TAccessor_>(acc))
@@ -60,15 +85,15 @@ struct IteratorPrescription
     ChildType child;
     NavigatorType navigator;
     AccessorType accessor;
-    const bool valgrind_debug = true;
 } ;
+
 
 template<typename Prescription>
 struct PrescriptionTypes
 {
-    typedef typename Prescription::AccessorType AccessorType;
-    typedef typename Prescription::NavigatorType NavigatorType;
-    typedef typename Prescription::AccessorType ChildType;
+    using AccessorType = typename Prescription::AccessorType;
+    using NavigatorType = typename Prescription::NavigatorType ;
+    using ChildType = typename Prescription::ChildType;
 };
 
 } // namespace details
@@ -82,26 +107,34 @@ struct PrescriptionTypes
  */
 template<
     typename TAccessor,
-    typename TNavigator>
+    typename TNavigator
+    >
 HDINLINE
 auto
-makeIteratorPrescription(TAccessor&& accessor,
-             TNavigator&& navigator)
--> hzdr::details::IteratorPrescription<
-    typename std::decay<TAccessor>::type,
-    typename std::decay<TNavigator>::type,
-    hzdr::NoChild>
-{
-    
-    typedef hzdr::details::IteratorPrescription< 
+makeIteratorPrescription(
+        TAccessor&& accessor,
+        TNavigator&& navigator
+)
+-> 
+    hzdr::details::IteratorPrescription<
         typename std::decay<TAccessor>::type,
         typename std::decay<TNavigator>::type,
-        hzdr::NoChild> Iterator;
+        hzdr::NoChild
+    >
+{
+    
+    using Iterator = hzdr::details::IteratorPrescription< 
+        typename std::decay<TAccessor>::type,
+        typename std::decay<TNavigator>::type,
+        hzdr::NoChild
+    >;
     
     return Iterator(
         hzdr::forward<TAccessor>(accessor), 
-        hzdr::forward<TNavigator>(navigator));
+        hzdr::forward<TNavigator>(navigator)
+    );
 }
+  
   
 /**
  * @brief creates an iterator concept. This concept has no childs.
@@ -112,28 +145,34 @@ makeIteratorPrescription(TAccessor&& accessor,
 template<
     typename TAccessor,
     typename TNavigator,
-    typename TChild>
+    typename TChild
+>
 HDINLINE
 auto
-makeIteratorPrescription(TAccessor && accessor,
-             TNavigator && navigator,
-             TChild && child
-            )
--> hzdr::details::IteratorPrescription<
+makeIteratorPrescription(
+    TAccessor && accessor,
+    TNavigator && navigator,
+    TChild && child
+)
+-> 
+hzdr::details::IteratorPrescription<
     typename std::decay<TAccessor>::type,
     typename std::decay<TNavigator>::type,
-    typename std::decay<TChild>::type>
+    typename std::decay<TChild>::type
+>
 {
     
-    typedef hzdr::details::IteratorPrescription< 
+    using Iterator = hzdr::details::IteratorPrescription< 
         typename std::decay<TAccessor>::type,
         typename std::decay<TNavigator>::type,
-        typename std::decay<TChild>::type> Iterator;
+        typename std::decay<TChild>::type
+    >;
     
     return Iterator(
         hzdr::forward<TAccessor>(accessor), 
         hzdr::forward<TNavigator>(navigator),
-        hzdr::forward<TChild>(child));
+        hzdr::forward<TChild>(child)
+    );
 }
 
 } // namespace hzdr
@@ -143,7 +182,13 @@ template<
     typename TNavigator,
     typename TChild
 >
-std::ostream& operator<<( std::ostream& out, hzdr::details::IteratorPrescription<TAccessor, TNavigator, TChild>  const & prescription) 
+std::ostream& operator<<( 
+    std::ostream & out, 
+    hzdr::details::IteratorPrescription<
+        TAccessor, 
+        TNavigator, 
+        TChild
+    > const & prescription) 
 {
 //      out << "Navigator: " << prescription.navigator << std::endl;
 //     out << "Child: " << prescription.child << std::endl;
