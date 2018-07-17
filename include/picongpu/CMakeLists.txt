@@ -115,9 +115,10 @@ endif()
 # Find DeepIterator
 ################################################################################
 #set(DeepIterator_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../thirdParty/deepiterator/")
-find_package(DeepIterator REQUIRED CONFIG PATHS "${CMAKE_CURRENT_SOURCE_DIR}/../../thirdParty/deepiterator/")
-include_directories(SYSTEM ${DeepIterator_INCLUDE_DIRS})
-Message(STATUS "Include directories: ${INCLUDE_DIRECTORIES}")
+find_package(DeepIterator REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../thirdParty/deepiterator/")
+if(DeepIterator_FOUND)
+    set(LIBS ${LIBS} DeepIterator::DeepIterator)
+endif()
 
 ################################################################################
 # Find mallocMC

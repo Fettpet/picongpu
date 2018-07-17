@@ -1,6 +1,6 @@
 /**
  * \struct Frame
- * @author Sebastian Hahn (t.hahn@hzdr.de)
+ * @author Sebastian Hahn (t.hahn@deepiterator.de)
  * @brief A PIConGPU like datastructure. It represent the frame in PIC. We use
  * a std::array to store some Particles. Both, the particle type and the number
  * of particles within the frame, are compiletime variables. 
@@ -15,11 +15,12 @@
 #include "deepiterator/definitions/hdinline.hpp"
 #include "deepiterator/traits/Traits.hpp"
 
-namespace hzdr
+namespace deepiterator
 {
 template<
     typename TParticle,
-    int_fast32_t maxParticles>
+    int_fast32_t maxParticles
+>
 struct Frame
 {
     typedef TParticle                           ValueType;
@@ -176,15 +177,15 @@ struct ComponentType<Frame<TParticle, maxParticles> >
 
 
 template<typename TParticle, int_fast32_t nb>
-struct ContainerCategory<hzdr::Frame<TParticle, nb> >
+struct ContainerCategory<deepiterator::Frame<TParticle, nb> >
 {
-    typedef hzdr::container::categorie::ArrayLike type;
+    typedef deepiterator::container::categorie::ArrayLike type;
 };
 
 template<typename TParticle, int_fast32_t nb>
-struct NumberElements<hzdr::Frame<TParticle, nb> >
+struct NumberElements<deepiterator::Frame<TParticle, nb> >
 {
-    typedef hzdr::Frame<TParticle, nb> Frame;
+    typedef deepiterator::Frame<TParticle, nb> Frame;
     
 
     HDINLINE
@@ -198,4 +199,4 @@ struct NumberElements<hzdr::Frame<TParticle, nb> >
 
 } // namespace traits
 
-}// namespace hzdr
+}// namespace deepiterator

@@ -147,7 +147,7 @@ public:
     
     HDINLINE 
     RangeTypeSupercell<simDim>&
-    dim()
+    extent()
     {
         return _dim;
     }
@@ -156,7 +156,7 @@ public:
     HDINLINE 
     const
     RangeTypeSupercell<simDim>&
-    dim()
+    extent()
     const
     {
         return _dim;
@@ -169,7 +169,7 @@ public:
  
 
 
-namespace hzdr
+namespace deepiterator
 {
 namespace traits
 {
@@ -193,7 +193,7 @@ struct NumberElements<pmacc::SupercellContainer<
     operator()(Container* container)
     const
     {
-        auto supercellSize = container->dim();
+        auto supercellSize = container->extent();
         int_fast32_t result = 1;
         for(int i=0; i<simDim; ++i)
         {
@@ -273,13 +273,13 @@ struct ContainerCategory<pmacc::SupercellContainer<
     >
 >
 {
-    using type = hzdr::container::categorie::ArrayNDLike< simDim>;
+    using type = deepiterator::container::categorie::ArrayNDLike< simDim>;
 };
 
     
 }// namespace traits
 
-} //namepsace hzdr 
+} //namepsace deepiterator 
 
 namespace pmacc
 {
@@ -775,11 +775,11 @@ struct KernelFillGaps
             T_ParBox,
             dim
         >;
-        using OffsetSupercell = hzdr::SelfValue<RangeTypeSupercell < dim > >;
+        using OffsetSupercell = deepiterator::SelfValue<RangeTypeSupercell < dim > >;
         
         // We go over all frames -> Within the particles is the parallization
-        typedef hzdr::SelfValue<uint_fast32_t, 0> Offset;
-        typedef hzdr::SelfValue<uint_fast32_t, 1> Jumpsize;
+        typedef deepiterator::SelfValue<uint_fast32_t, 0> Offset;
+        typedef deepiterator::SelfValue<uint_fast32_t, 1> Jumpsize;
 
         RangeTypeSupercell < dim >::supercellSize = mapper.getGridSuperCells();
         auto supercellContainer = SupercellWrapper(
@@ -787,37 +787,38 @@ struct KernelFillGaps
             RangeTypeSupercell<3>(mapper.getGridSuperCells())
         );
         
-        auto && receptionFrame = hzdr::makeIteratorPrescription(
-            hzdr::makeAccessor(),
-            hzdr::makeNavigator(
+        auto && receptionFrame = deepiterator::makeIteratorPrescription(
+            deepiterator::makeAccessor(),
+            deepiterator::makeNavigator(
                 Offset(),
                 Jumpsize()
             )
         );
         
-        auto && receptionSupercell = hzdr::makeIteratorPrescription(
-            hzdr::makeAccessor(),
-            hzdr::makeNavigator(
+        auto && receptionSupercell = deepiterator::makeIteratorPrescription(
+            deepiterator::makeAccessor(),
+            deepiterator::makeNavigator(
                 OffsetSupercell(superCellIdx),
                 Jumpsize(),
-                hzdr::Slice<hzdr::slice::NumberElements, 1>()
+                deepiterator::Slice<deepiterator::slice::NumberElements, 1>()
             ),
             receptionFrame
         );
 
         
-         auto && view = hzdr::makeView(
+         auto && view = deepiterator::makeView(
              supercellContainer,
              receptionSupercell
          );
         
         // define an iterator type
-        using View = decltype(hzdr::makeView(
+        using View = decltype(deepiterator::makeView(
              supercellContainer,
              receptionSupercell
          ));
         
         using Iterator = decltype(view.begin());
+        using BackwardIterator = decltype(view.rbegin());
         // data copied from right (last) to left (first)
         PMACC_SMEM(
             acc,
@@ -827,7 +828,7 @@ struct KernelFillGaps
         PMACC_SMEM(
             acc,
             backwardIterator,
-            Iterator
+            BackwardIterator
         );
 
         PMACC_SMEM(
@@ -873,7 +874,7 @@ struct KernelFillGaps
 
         while ( 
             forwardIterator != view.end() 
-         && forwardIterator != backwardIterator)
+         && (&(*forwardIterator)) != (&(*backwardIterator)))
         {
             onlyMaster(
                 [&](
@@ -984,18 +985,18 @@ struct KernelFillGaps
                         else if( counterGaps > counterParticles )
                         {
                             // we need more particles
-                            --backwardIterator;
+                            ++backwardIterator;
                             pb.removeLastFrame(superCellIdx);
 
                         }
                         else if( counterGaps == counterParticles )
                         {
                             // update lastFrame and firstFrame
-                            --backwardIterator;
+                            ++backwardIterator;
                             pb.removeLastFrame(superCellIdx);
                             
                             if( backwardIterator != view.rend()
-                                && backwardIterator != forwardIterator )
+                                && (&(*backwardIterator)) != (&(*forwardIterator)) )
                             {
                                 ++forwardIterator;
                             }

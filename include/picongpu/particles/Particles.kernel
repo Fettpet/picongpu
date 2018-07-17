@@ -155,7 +155,7 @@ public:
     
     HDINLINE 
     RangeTypeSupercell<simDim>&
-    dim()
+    extent()
     {
         return _dim;
     }
@@ -164,7 +164,7 @@ public:
     HDINLINE 
     const
     RangeTypeSupercell<simDim>&
-    dim()
+    extent()
     const
     {
         return _dim;
@@ -177,7 +177,7 @@ public:
  
 
 
-namespace hzdr
+namespace deepiterator
 {
 namespace traits
 {
@@ -203,7 +203,7 @@ struct NumberElements<picongpu::SupercellContainer<
     operator()(Container* container)
     const
     {
-        auto supercellSize = container->dim();
+        auto supercellSize = container->extent();
         int_fast32_t result = 1;
         for(int i=0; i<simDim; ++i)
         {
@@ -294,13 +294,13 @@ struct ContainerCategory<picongpu::SupercellContainer<
     >
 >
 {
-    using type = hzdr::container::categorie::ArrayNDLike< simDim>;
+    using type = deepiterator::container::categorie::ArrayNDLike< simDim>;
 };
 
     
 }// namespace traits
 
-} //namepsace hzdr 
+} //namepsace deepiterator 
 
     
 
@@ -689,7 +689,7 @@ struct KernelMoveAndMarkParticles
             T_ParBox,
             simDim
         >;
-        using OffsetSupercell = hzdr::SelfValue<RangeTypeSupercell < simDim > >;
+        using OffsetSupercell = deepiterator::SelfValue<RangeTypeSupercell < simDim > >;
         
         using namespace mappings::threads;
 
@@ -716,8 +716,8 @@ struct KernelMoveAndMarkParticles
         >;
         
         // We go over all frames -> Within the particles is the parallization
-        typedef hzdr::SelfValue<uint_fast32_t, 0> Offset;
-        typedef hzdr::SelfValue<uint_fast32_t, 1> Jumpsize;
+        typedef deepiterator::SelfValue<uint_fast32_t, 0> Offset;
+        typedef deepiterator::SelfValue<uint_fast32_t, 1> Jumpsize;
 
         RangeTypeSupercell < simDim >::supercellSize = mapper.getGridSuperCells();
         auto supercellContainer = SupercellWrapper(
@@ -726,26 +726,26 @@ struct KernelMoveAndMarkParticles
             RangeTypeSupercell<3>(mapper.getGridSuperCells())
         );
         
-        auto && receptionFrame = hzdr::makeIteratorPrescription(
-            hzdr::makeAccessor(),
-            hzdr::makeNavigator(
+        auto && receptionFrame = deepiterator::makeIteratorPrescription(
+            deepiterator::makeAccessor(),
+            deepiterator::makeNavigator(
                 Offset(),
                 Jumpsize()
             )
         );
         
-        auto && receptionSupercell = hzdr::makeIteratorPrescription(
-            hzdr::makeAccessor(),
-            hzdr::makeNavigator(
+        auto && receptionSupercell = deepiterator::makeIteratorPrescription(
+            deepiterator::makeAccessor(),
+            deepiterator::makeNavigator(
                 OffsetSupercell(block),
                 Jumpsize(),
-                hzdr::Slice<hzdr::slice::Distance, 0>()
+                deepiterator::Slice<deepiterator::slice::NumberElements, 1>()
             ),
             receptionFrame
         );
 
         
-         auto && view = hzdr::makeView(
+         auto && view = deepiterator::makeView(
              supercellContainer,
              receptionSupercell
          );
@@ -800,7 +800,7 @@ struct KernelMoveAndMarkParticles
         // end kernel if we have no frames
         if( it == view.rend() )
            return;
-        
+
         nvidia::functors::Assign assign;
         ThreadCollective<
             T_DataDomain,
@@ -827,7 +827,7 @@ struct KernelMoveAndMarkParticles
 
          int counter = 0;
         // move over frames and call frame solver
-        for(;it != view.rend(); --it)
+        for(;it != view.rend(); ++it)
         {
 
 //              std::cout << it << std::endl;

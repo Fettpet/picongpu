@@ -310,7 +310,7 @@ public:
 } //naemspace traits
 }//namespace pmacc
 
-namespace hzdr 
+namespace deepiterator
 {
 namespace traits
 {
@@ -364,7 +364,7 @@ struct ContainerCategory<pmacc::Frame<
     T_ParticleDescription
 > >
 {
-    typedef hzdr::container::categorie::ArrayLike type;
+    typedef deepiterator::container::categorie::ArrayLike type;
 };
 
 template<
@@ -380,5 +380,5 @@ struct ComponentType<pmacc::Frame<
     using type = typename FrameType::ParticleType;
 };
 }//namespace traits
-} //namespace hzdr 
+} //namespace deepiterator 
     

@@ -23,13 +23,13 @@
 #include "deepiterator/definitions/hdinline.hpp"
 
 
-namespace hzdr 
+namespace deepiterator 
 {
 
 namespace details 
 {
 /**
- * @author Sebastian Hahn t.hahn <at> hzdr.de
+ * @author Sebastian Hahn t.hahn <at> deepiterator.de
  * @brief A Prescription consists of an accessor, a navigator and a child. 
  * A Prescription decribes an abstract way to iterate through the data. The 
  * navigator and the accessor are not bound to a container.
@@ -38,12 +38,18 @@ namespace details
 template<
     typename TAccessor,
     typename TNavigator,
-    typename TChild>
+    typename TChild
+>
 struct IteratorPrescription
 {
     typedef TNavigator NavigatorType;
     typedef TAccessor AccessorType;
     typedef TChild ChildType;
+    
+    static const bool hasChild = not std::is_same<
+        TChild,
+        deepiterator::NoChild
+    >::value;
     
     HDINLINE 
     IteratorPrescription() = delete;
@@ -62,9 +68,9 @@ struct IteratorPrescription
             TAccessor_ && acc,
             TNavigator_ && navi
     ):
-        child(hzdr::NoChild()),
-        navigator(hzdr::forward<TNavigator_>(navi)),
-        accessor(hzdr::forward<TAccessor_>(acc))
+        child(deepiterator::NoChild()),
+        navigator(deepiterator::forward<TNavigator_>(navi)),
+        accessor(deepiterator::forward<TAccessor_>(acc))
     {}
     
     template<
@@ -77,9 +83,9 @@ struct IteratorPrescription
             TNavigator_ && navi,
             TChild_ && child
     ):
-        child(hzdr::forward<TChild_>(child)),
-        navigator(hzdr::forward<TNavigator_>(navi)),
-        accessor(hzdr::forward<TAccessor_>(acc))
+        child(deepiterator::forward<TChild_>(child)),
+        navigator(deepiterator::forward<TNavigator_>(navi)),
+        accessor(deepiterator::forward<TAccessor_>(acc))
     {}
     
     ChildType child;
@@ -116,26 +122,25 @@ makeIteratorPrescription(
         TNavigator&& navigator
 )
 -> 
-    hzdr::details::IteratorPrescription<
+    deepiterator::details::IteratorPrescription<
         typename std::decay<TAccessor>::type,
         typename std::decay<TNavigator>::type,
-        hzdr::NoChild
+        deepiterator::NoChild
     >
 {
     
-    using Iterator = hzdr::details::IteratorPrescription< 
+    using Iterator = deepiterator::details::IteratorPrescription< 
         typename std::decay<TAccessor>::type,
         typename std::decay<TNavigator>::type,
-        hzdr::NoChild
+        deepiterator::NoChild
     >;
     
     return Iterator(
-        hzdr::forward<TAccessor>(accessor), 
-        hzdr::forward<TNavigator>(navigator)
+        deepiterator::forward<TAccessor>(accessor), 
+        deepiterator::forward<TNavigator>(navigator)
     );
 }
-  
-  
+
 /**
  * @brief creates an iterator concept. This concept has no childs.
  * @param accessor Describes a concept to dereference the element 
@@ -155,27 +160,124 @@ makeIteratorPrescription(
     TChild && child
 )
 -> 
-hzdr::details::IteratorPrescription<
+deepiterator::details::IteratorPrescription<
     typename std::decay<TAccessor>::type,
     typename std::decay<TNavigator>::type,
     typename std::decay<TChild>::type
 >
 {
     
-    using Iterator = hzdr::details::IteratorPrescription< 
+    using Prescription = deepiterator::details::IteratorPrescription< 
         typename std::decay<TAccessor>::type,
         typename std::decay<TNavigator>::type,
         typename std::decay<TChild>::type
     >;
     
-    return Iterator(
-        hzdr::forward<TAccessor>(accessor), 
-        hzdr::forward<TNavigator>(navigator),
-        hzdr::forward<TChild>(child)
+    return Prescription(
+        deepiterator::forward<TAccessor>(accessor), 
+        deepiterator::forward<TNavigator>(navigator),
+        deepiterator::forward<TChild>(child)
     );
 }
 
-} // namespace hzdr
+namespace details 
+{
+
+template<
+    typename TContainer,
+    typename TPrescription,
+    typename TPrescriptionNoRef = typename std::decay<TPrescription>::type,
+    typename = typename std::enable_if<not TPrescriptionNoRef::hasChild>::type
+>
+HDINLINE
+auto
+makeIteratorPrescription(
+    TPrescription && prescription
+)
+-> 
+    deepiterator::details::IteratorPrescription<
+        decltype(makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor)),
+        decltype(makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator)),
+        deepiterator::NoChild
+    >
+{
+    using Prescription = deepiterator::details::IteratorPrescription< 
+        decltype(makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor)),
+        decltype(makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator)),
+        deepiterator::NoChild
+    >;
+    
+    return Prescription(
+        makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor
+        ), 
+        makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator
+        )
+    );
+}
+
+
+template<
+    typename TContainer,
+    typename ComponentType = typename deepiterator::traits::ComponentType<
+        TContainer
+    >::type,
+    typename TPrescription,
+    typename TPrescriptionNoRef = typename std::decay<TPrescription>::type,
+    typename = typename std::enable_if<TPrescriptionNoRef::hasChild>::type
+>
+HDINLINE
+auto
+makeIteratorPrescription(
+    TPrescription && prescription
+)
+-> 
+    deepiterator::details::IteratorPrescription<
+        decltype(makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor)),
+        decltype(makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator)),
+        decltype(makeIteratorPrescription<ComponentType>(
+            deepiterator::forward<TPrescription>(prescription).child)
+        )
+    >
+{
+
+    using Prescription = deepiterator::details::IteratorPrescription< 
+        decltype(makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor)),
+        decltype(makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator)),
+        decltype(makeIteratorPrescription<ComponentType>(
+            deepiterator::forward<TPrescription>(prescription).child)
+        )
+    >;
+    
+    return Prescription(
+        makeAccessor<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).accessor
+        ), 
+        makeNavigator<TContainer>(
+            deepiterator::forward<TPrescription>(prescription).navigator
+        ),
+        makeIteratorPrescription<ComponentType>(
+            deepiterator::forward<TPrescription>(prescription).child
+        )
+        
+    );
+    
+}
+  
+
+    
+} // namespace details
+
+} // namespace deepiterator
 
 template<
     typename TAccessor,
@@ -184,7 +286,7 @@ template<
 >
 std::ostream& operator<<( 
     std::ostream & out, 
-    hzdr::details::IteratorPrescription<
+    deepiterator::details::IteratorPrescription<
         TAccessor, 
         TNavigator, 
         TChild

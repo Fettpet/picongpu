@@ -129,7 +129,7 @@ public:
 
 } // namespace pmacc
 
-namespace hzdr 
+namespace deepiterator 
 {
 namespace traits
 {
@@ -184,7 +184,7 @@ struct HasConstantSize<pmacc::SuperCell<T> >
 template< typename T_Container>
 struct ContainerCategory<pmacc::SuperCell<T_Container> >
 {
-    typedef hzdr::container::categorie::SupercellLike type;
+    typedef deepiterator::container::categorie::SupercellLike type;
 };
 
 template< typename T>
@@ -208,4 +208,4 @@ struct IndexType<
 
 }//namespace traits
 
-}// namespace hzdr
+}// namespace deepiterator
